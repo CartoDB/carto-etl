@@ -1,0 +1,3 @@
+-e git+git@github.com:CartoDB/carto-python.git@5b5dc85057bc3ff6cf89ba4ad1d93c47e963f8de#egg=carto
+pyrestcli==0.6.1
+ipython==5.1.0

@@ -1,0 +1,13 @@
+[carto]
+base_url=https://MYUSER.carto.com/api/
+api_key=MYAPIKEY
+table_name=MYTABLE
+columns=COLUMN_1,COLUMN_2,COLUMN_3
+
+[etl]
+chunk_size=5
+max_attempts=3
+
+[log]
+file=etl.log
+level=debug
