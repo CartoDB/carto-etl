@@ -15,3 +15,9 @@ level=debug
 [here]
 app_code=YOUR_HERE_APP_CODE
 app_id=YOUR_HERE_APP_ID
+
+[geocoding]
+input_delimiter=,
+output_delimiter=,
+output_columns=displayLatitude,displayLongitude
+max_results=1

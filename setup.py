@@ -7,4 +7,4 @@ setup(name="carto-etl",
       description="ETL and geocoding functions",
       version="1.0.0",
       url="https://github.com/CartoDB/carto-etl",
-      packages=["carto"])
+      packages=["."])

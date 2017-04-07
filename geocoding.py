@@ -22,6 +22,12 @@ HERE_APP_ID = config.get('here', 'app_id')
 CARTO_BASE_URL = config.get('carto', 'base_url')
 CARTO_API_KEY = config.get('carto', 'api_key')
 MAX_ATTEMPTS = int(config.get('etl', 'max_attempts'))
+INPUT_DELIMITER = config.get('geocoding', 'input_delimiter')
+OUTPUT_DELIMITER = config.get('geocoding', 'output_delimiter')
+OUTPUT_COLUMNS = config.get('geocoding', 'output_columns')
+MAX_RESULTS = int(config.get('geocoding', 'max_results'))
+
+HERE_API_URL = "https://batch.geocoder.cit.api.here.com/6.2/jobs/"
 
 
 sql = SQLClient(APIKeyAuthClient(CARTO_BASE_URL, CARTO_API_KEY))
@@ -42,18 +48,18 @@ class HereGeocodingJob(object):
                 "action": "run",
                 "gen": 9,
                 "header": True,
-                "indelim": ",",
-                "outdelim": ",",
+                "indelim": INPUT_DELIMITER,
+                "outdelim": OUTPUT_DELIMITER,
                 "mailto": email,
-                "outcols": "displayLatitude,displayLongitude",
+                "outcols": OUTPUT_COLUMNS,
                 "outputCombined": False,
-                "maxresults": 1,
+                "maxresults": MAX_RESULTS,
                 "app_code": HERE_APP_CODE,
                 "app_id": HERE_APP_ID
             }
 
             with open(csv_file_path) as csv_file:
-                r = requests.post("https://batch.geocoder.cit.api.here.com/6.2/jobs", data=csv_file, params=params)
+                r = requests.post(HERE_API_URL, data=csv_file, params=params)
 
             tree = etree.fromstring(r.text.encode("utf-8"))
             try:
@@ -70,7 +76,7 @@ class HereGeocodingJob(object):
             "app_id": HERE_APP_ID
         }
 
-        r = requests.get("https://batch.geocoder.cit.api.here.com/6.2/jobs/{request_id}".format(request_id=self.request_id), params=params)
+        r = requests.get(HERE_API_URL + "{request_id}".format(request_id=self.request_id), params=params)
 
         tree = etree.fromstring(r.text.encode("utf-8"))
         self.status = tree.xpath("//Status")[0].text
@@ -81,7 +87,7 @@ class HereGeocodingJob(object):
             "app_id": HERE_APP_ID
         }
 
-        r = requests.get("https://batch.geocoder.cit.api.here.com/6.2/jobs/{request_id}/all".format(request_id=self.request_id), params=params)
+        r = requests.get(HERE_API_URL + "{request_id}/all".format(request_id=self.request_id), params=params)
 
         if r.status_code == requests.codes.not_found:
             return
@@ -97,12 +103,22 @@ class HereGeocodingJob(object):
                             csv_reader = csv.DictReader(original_zipfile.open(zipinfo.filename))
                             with BytesIO() as clean_csv:
                                 csv_writer = csv.writer(clean_csv)
-                                csv_writer.writerow(["recId", "displayLatitude", "displayLongitude"])
+                                csv_writer.writerow(self.__get_output_columns__())
                                 for row in csv_reader:
-                                    csv_writer.writerow([row["recId"], row["displayLatitude"], row["displayLongitude"]])
+                                    csv_writer.writerow(self.__get_row__(row))
                                 clean_zipfile.writestr(zipinfo.filename, clean_csv.getvalue())
                         else:
                             clean_zipfile.writestr(zipinfo.filename, original_zipfile.read(zipinfo.filename))
+
+    def __get_output_columns__(self):
+        return OUTPUT_COLUMNS.split(",")
+
+    def __get_row__(self, row):
+        columns = self.__get_output_columns__()
+        row_value = []
+        for column in columns:
+            row_value.append(row[column])
+        return row_value
 
 
 class CartoGeocodingJob(object):
