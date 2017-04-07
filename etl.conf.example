@@ -19,5 +19,5 @@ app_id=YOUR_HERE_APP_ID
 [geocoding]
 input_delimiter=,
 output_delimiter=,
-output_columns=displayLatitude,displayLongitude
+output_columns=recId,displayLatitude,displayLongitude,locationLabel,houseNumber,street,district,city,postalCode,county,state,country,relevance
 max_results=1
