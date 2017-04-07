@@ -100,9 +100,9 @@ class HereGeocodingJob(object):
                 with ZipFile("{file_path_without_extension}sss.zip".format(file_path_without_extension=join(self.target_dir, self.request_id)), "w") as clean_zipfile:
                     for zipinfo in zipinfos:
                         if zipinfo.filename.endswith("_out.txt") or zipinfo.filename.endswith("_err.txt"):
-                            csv_reader = csv.DictReader(original_zipfile.open(zipinfo.filename))
+                            csv_reader = csv.DictReader(original_zipfile.open(zipinfo.filename), delimiter=OUTPUT_DELIMITER)
                             with BytesIO() as clean_csv:
-                                csv_writer = csv.writer(clean_csv)
+                                csv_writer = csv.writer(clean_csv, delimiter=OUTPUT_DELIMITER)
                                 csv_writer.writerow(self.__get_output_columns__())
                                 for row in csv_reader:
                                     csv_writer.writerow(self.__get_row__(row))
@@ -117,7 +117,10 @@ class HereGeocodingJob(object):
         columns = self.__get_output_columns__()
         row_value = []
         for column in columns:
-            row_value.append(row[column])
+            if column in row:
+                row_value.append(row[column])
+            else:
+                row_value.append('')
         return row_value
 
 
