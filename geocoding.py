@@ -12,7 +12,7 @@ from carto.auth import APIKeyAuthClient
 from carto.sql import SQLClient
 
 
-logger = logging.getLogger('carto-geocoding')
+logger = logging.getLogger(__name__)
 
 config = ConfigParser.RawConfigParser()
 config.read("etl.conf")
@@ -89,6 +89,7 @@ class HereGeocodingJob(object):
 
         r = requests.get(HERE_API_URL + "{request_id}/all".format(request_id=self.request_id), params=params)
 
+        self.status = r.status_code
         if r.status_code == requests.codes.not_found:
             return
 
