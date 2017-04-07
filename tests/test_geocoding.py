@@ -4,7 +4,7 @@ import time
 
 from geocoding import *
 
-def test_error():
+def test_geocoding():
     dir_path = os.path.dirname(os.path.realpath(__file__))
     request_id = None
     geocoding_job = HereGeocodingJob(csv_file_path=dir_path + '/../test_files/random3', email='alrocar@cartodb.com', request_id=request_id)
