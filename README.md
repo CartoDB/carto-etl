@@ -162,6 +162,8 @@ Caveats:
 
 See ```test_geocoding.py``` for a usage example
 
+There is a sample input csv file in ```test_files/sample.csv```. Columns of the input CSV are fixed, that means that any input CSV to geocode has to have the same structure. Field delimiters can be configured via ```etl.conf``` file.
+
 To run tests do the following:
 
 ```
