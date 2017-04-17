@@ -1,6 +1,7 @@
 import csv
-import ConfigParser
+import configparser
 import logging
+from builtins import range
 
 from carto.auth import APIKeyAuthClient
 from carto.sql import SQLClient
@@ -9,7 +10,7 @@ from carto.sql import BatchSQLClient
 
 logger = logging.getLogger('carto-etl')
 
-config = ConfigParser.RawConfigParser()
+config = configparser.RawConfigParser()
 config.read("etl.conf")
 
 CARTO_BASE_URL = config.get('carto', 'base_url')
@@ -28,7 +29,7 @@ def chunks(full_list, chunk_size, start_chunk=1, end_chunk=None):
     finished = False
     while finished is False:
         chunk = []
-        for chunk_num in xrange(chunk_size):
+        for chunk_num in range(chunk_size):
             if chunk_num < (start_chunk - 1):
                 continue
 
@@ -36,7 +37,7 @@ def chunks(full_list, chunk_size, start_chunk=1, end_chunk=None):
                 return
 
             try:
-                chunk.append(full_list.next())
+                chunk.append(next(full_list))
             except StopIteration:
                 finished = True
                 if len(chunk) > 0:
@@ -85,7 +86,7 @@ class InsertJob(UploadJob):
 
                 query = query[:-1]
                 logger.debug("Chunk #{chunk_num}: {query}".format(chunk_num=(chunk_num + 1), query=query))
-                for retry in xrange(MAX_ATTEMPTS):
+                for retry in range(MAX_ATTEMPTS):
                     try:
                         sql.send(query)
                     except Exception as e:
@@ -128,7 +129,7 @@ class UpdateJob(UploadJob):
                 query = query[:-1] + " where {id_column} = {id}".format(id_column=self.id_column, id=record[self.id_column])
 
                 logger.debug("Row #{row_num}: {query}".format(row_num=(row_num + 1), query=query))
-                for retry in xrange(MAX_ATTEMPTS):
+                for retry in range(MAX_ATTEMPTS):
                     try:
                         sql.send(query)
                     except Exception as e:
@@ -161,7 +162,7 @@ class DeleteJob(UploadJob):
                 query = query[:-1] + ")"
 
                 logger.debug("Chunk #{chunk_num}: {query}".format(chunk_num=(chunk_num + 1), query=query))
-                for retry in xrange(MAX_ATTEMPTS):
+                for retry in range(MAX_ATTEMPTS):
                     try:
                         sql.send(query)
                     except Exception as e:
