@@ -85,6 +85,7 @@ class InsertJob(UploadJob):
                     query = query[:-1] + "),"
 
                 query = query[:-1]
+                query = query.replace("'", "''")
                 logger.debug("Chunk #{chunk_num}: {query}".format(chunk_num=(chunk_num + 1), query=query))
                 for retry in range(MAX_ATTEMPTS):
                     try:
