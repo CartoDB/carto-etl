@@ -90,12 +90,12 @@ class InsertJob(UploadJob):
                     try:
                         sql.send(query)
                     except Exception as e:
-                        logger.warning("Chunk #{chunk_num}: Retry ({error_msg})".format(chunk_num=(chunk_num + 1), error_msg=e))
+                        logger.warning("Chunk #{chunk_num}: Retrying ({error_msg})".format(chunk_num=(chunk_num + 1), error_msg=e))
                     else:
                         logger.info("Chunk #{chunk_num}: Success!".format(chunk_num=(chunk_num + 1)))
                         break
                 else:
-                    logger.error("Chunk #{chunk_num}: Failed ({error_msg})".format(chunk_num=(chunk_num + 1), error_msg=e))
+                    logger.error("Chunk #{chunk_num}: Failed!)".format(chunk_num=(chunk_num + 1)))
 
 
 class UpdateJob(UploadJob):
