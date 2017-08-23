@@ -16,6 +16,7 @@ config.read("etl.conf")
 CARTO_BASE_URL = config.get('carto', 'base_url')
 CARTO_API_KEY = config.get('carto', 'api_key')
 CARTO_TABLE_NAME = config.get('carto', 'table_name')
+CARTO_DELIMITER = config.get('carto', 'delimiter')
 CARTO_COLUMNS = config.get('carto', 'columns')
 CHUNK_SIZE = int(config.get('etl', 'chunk_size'))
 MAX_ATTEMPTS = int(config.get('etl', 'max_attempts'))
@@ -69,7 +70,7 @@ class UploadJob(object):
 class InsertJob(UploadJob):
     def run(self, start_chunk=1, end_chunk=None):
         with open(self.csv_file_path) as f:
-            csv_reader = csv.DictReader(f)
+            csv_reader = csv.DictReader(f, delimiter=CARTO_DELIMITER)
 
             for chunk_num, record_chunk in enumerate(chunks(csv_reader, CHUNK_SIZE, start_chunk, end_chunk)):
                 query = "insert into {table_name} (the_geom,{columns}) values".format(table_name=CARTO_TABLE_NAME, columns=CARTO_COLUMNS.lower())
@@ -106,7 +107,7 @@ class UpdateJob(UploadJob):
 
     def run(self, start_row=1, end_row=None):
         with open(self.csv_file_path) as f:
-            csv_reader = csv.DictReader(f)
+            csv_reader = csv.DictReader(f, delimiter=CARTO_DELIMITER)
 
             for row_num, record in enumerate(csv_reader):
                 if row_num < (start_row - 1):
@@ -149,7 +150,7 @@ class DeleteJob(UploadJob):
 
     def run(self, start_chunk=1, end_chunk=None):
         with open(self.csv_file_path) as f:
-            csv_reader = csv.DictReader(f)
+            csv_reader = csv.DictReader(f, delimiter=CARTO_DELIMITER)
 
             for chunk_num, record_chunk in enumerate(chunks(csv_reader, CHUNK_SIZE, start_chunk, end_chunk)):
                 query = "delete from {table_name} where {column} in (".format(table_name=CARTO_TABLE_NAME, column=self.id_column.lower())
