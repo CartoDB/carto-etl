@@ -149,6 +149,7 @@ class CartoGeocodingJob(object):
                         logger.info("Row #{row_num}: Success!".format(row_num=(row_num + 1)))
                         break
                 else:
+                    q = None
                     logger.error("Row #{row_num}: Failed ({error_msg})".format(row_num=(row_num + 1), error_msg=e))
                 try:
                     result = q["rows"][0]
@@ -157,7 +158,7 @@ class CartoGeocodingJob(object):
                     else:
                         found_addresses.append("{id},{latitude},{longitude}".format(id=record["recId"], latitude=q["rows"][0]["latitude"],
                                                                                     longitude=q["rows"][0]["longitude"]))
-                except (AttributeError, IndexError, UnboundLocalError):
+                except (KeyError, TypeError, AttributeError, IndexError, UnboundLocalError):
                     invalid_addresses.append("{id},{address},{country}".format(id=record["recId"], address=record["searchText"], country=record["country"]))
 
             now = datetime.now()
