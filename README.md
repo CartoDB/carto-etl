@@ -40,7 +40,7 @@ max_retries=3
 
 [log]
 file=etl.log
-level=debug
+level=30
 ```
 
 Parameters:
@@ -56,7 +56,16 @@ Parameters:
   * `max_attempts`: Number of attempts before giving up on a API request to CARTO.
 * Related to logging:
   * `file`: File name (or path) to the log file.
-  * `level`: Log level for the log file, one of "debug", "info", "warn", "error" or "critical".
+  * `level`: numeric og level for the log file, as in
+
+|  Level | Numeric value |
+|--------|---------------|
+| CRITICAL | 50 |
+| ERROR | 40 |
+| WARNING | 30 |
+| INFO | 20 |
+| DEBUG | 10 |
+| NOTSET | 0 |
 
 ## ETL
 

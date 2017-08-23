@@ -1,14 +1,14 @@
 [carto]
-base_url=https://MYUSER.carto.com/api/
-api_key=MYAPIKEY
-table_name=MYTABLE
+base_url=https://cartouser.carto.com/api/
+api_key=5565dgfgfd2b8ajjhgjgfa94d311aa60lk89vnber45errfg5gb
+table_name=samples
 delimiter=,
-columns=COLUMN_1,COLUMN_2,COLUMN_3
+columns=object_id,privacy,resource_type,country_code
 
 [etl]
 chunk_size=500
-max_attempts=3
+max_retries=3
 
 [log]
 file=etl.log
-level=debug
+level=30
