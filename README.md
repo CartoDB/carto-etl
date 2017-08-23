@@ -31,6 +31,7 @@ There is a template file `etl.conf.example` that can be used to get the final `e
 base_url=https://cartouser.carto.com/api/
 api_key=5565dgfgfd2b8ajjhgjgfa94d311aa60lk89vnber45errfg5gb
 table_name=samples
+delimiter=,
 columns=object_id,privacy,resource_type,country_code
 
 [etl]
@@ -48,6 +49,7 @@ Parameters:
   * `base_url`: CARTO API endpoint root for the user.
   * `api_key`: API key for the CARTO user.
   * `table_name`: Name of the target table in CARTO.
+  * `delimiter`: character used as delimiter in the CSV file, tipycally a comma
   * `columns`: Columns of the CSV file that will be transferred to CARTO.
 * Related to ETL:
   * `chunk_size`: Number of items to be grouped on a single INSERT or DELETE request. POST requests can deal with several MBs of data (i.e. characters), so this number can go quite high if you wish.
