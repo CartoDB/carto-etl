@@ -8,6 +8,8 @@ columns=COLUMN_1,COLUMN_2,COLUMN_3
 [etl]
 chunk_size=500
 max_attempts=3
+file_encoding=utf-8
+force_no_geometry=false
 
 [log]
 file=etl.log
