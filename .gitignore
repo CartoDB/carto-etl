@@ -2,3 +2,5 @@
 *.conf
 *.log
 env
+.DS_Store
+.idea
