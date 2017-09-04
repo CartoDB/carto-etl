@@ -28,7 +28,7 @@ There is a template file `etl.conf.example` that can be used to get the final `e
 
 ```
 [carto]
-base_url=https://cartouser.carto.com/api/
+base_url=https://cartouser.carto.com/
 api_key=5565dgfgfd2b8ajjhgjgfa94d311aa60lk89vnber45errfg5gb
 table_name=samples
 delimiter=,
@@ -40,7 +40,7 @@ max_retries=3
 
 [log]
 file=etl.log
-level=debug
+level=30
 ```
 
 Parameters:
@@ -56,7 +56,16 @@ Parameters:
   * `max_attempts`: Number of attempts before giving up on a API request to CARTO.
 * Related to logging:
   * `file`: File name (or path) to the log file.
-  * `level`: Log level for the log file, one of "debug", "info", "warn", "error" or "critical".
+  * `level`: numeric log level for the log file, as in
+
+|  Level | Numeric value |
+|--------|---------------|
+| CRITICAL | 50 |
+| ERROR | 40 |
+| WARNING | 30 |
+| INFO | 20 |
+| DEBUG | 10 |
+| NOTSET | 0 |
 
 ## ETL
 

@@ -7,9 +7,6 @@ from carto.auth import APIKeyAuthClient
 from carto.sql import SQLClient
 from carto.sql import BatchSQLClient
 
-
-logger = logging.getLogger('carto-etl')
-
 config = configparser.RawConfigParser()
 config.read("etl.conf")
 
@@ -20,10 +17,15 @@ CARTO_DELIMITER = config.get('carto', 'delimiter')
 CARTO_COLUMNS = config.get('carto', 'columns')
 CHUNK_SIZE = int(config.get('etl', 'chunk_size'))
 MAX_ATTEMPTS = int(config.get('etl', 'max_attempts'))
+LOG_FILE = config.get('log', 'file')
+LOG_LEVEL = int(config.get('log', 'level'))
 
 api_auth = APIKeyAuthClient(CARTO_BASE_URL, CARTO_API_KEY)
 sql = SQLClient(api_auth)
 bsql = BatchSQLClient(api_auth)
+
+logging.basicConfig(filename=LOG_FILE, filemode='w', level=LOG_LEVEL)
+logger = logging.getLogger('carto-etl')
 
 
 def chunks(full_list, chunk_size, start_chunk=1, end_chunk=None):
