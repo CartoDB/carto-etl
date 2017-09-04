@@ -1,9 +1,9 @@
 [carto]
 base_url=https://cartouser.carto.com/
-api_key=5565dgfgfd2b8ajjhgjgfa94d311aa60lk89vnber45e1rfg5gb
-table_name=samples
+api_key=MYAPIKEY
+table_name=MYTABLE
 delimiter=,
-columns=object_id,privacy,resource_type,country_code
+columns=column1, column2, column3
 
 [etl]
 chunk_size=500
