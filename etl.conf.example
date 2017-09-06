@@ -12,3 +12,13 @@ max_retries=3
 [log]
 file=etl.log
 level=30
+
+[here]
+app_code=YOUR_HERE_APP_CODE
+app_id=YOUR_HERE_APP_ID
+
+[geocoding]
+input_delimiter=,
+output_delimiter=,
+output_columns=recId,displayLatitude,displayLongitude,locationLabel,houseNumber,street,district,city,postalCode,county,state,country,relevance
+max_results=1

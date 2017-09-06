@@ -41,6 +41,12 @@ max_retries=3
 [log]
 file=etl.log
 level=30
+
+[geocoding]
+input_delimiter=,
+output_delimiter=,
+output_columns=recId,displayLatitude,displayLongitude,locationLabel,houseNumber,street,district,city,postalCode,county,state,country,relevance
+max_results=1
 ```
 
 Parameters:
@@ -57,7 +63,6 @@ Parameters:
 * Related to logging:
   * `file`: File name (or path) to the log file.
   * `level`: numeric log level for the log file, as in
-
 |  Level | Numeric value |
 |--------|---------------|
 | CRITICAL | 50 |
@@ -66,6 +71,12 @@ Parameters:
 | INFO | 20 |
 | DEBUG | 10 |
 | NOTSET | 0 |
+
+* Related to geocoding:
+  * `input_delimiter`: The field delimiter in the input CSV for the batch geocoding job
+  * `output_delimiter`: The field delimiter to be used for the output geocoded CSV
+  * `output_columns`: The output columns that will appear in the output geocoded CSV. See (HERE API docs)[https://developer.here.com/rest-apis/documentation/batch-geocoder/topics/data-output.html]
+  * `max_results`: Max number of results per address in the input CSV
 
 ## ETL
 
@@ -157,3 +168,22 @@ Caveats:
 
 * If you are going to run more than one ETL job, overviews should be regenerated only **after** all of them have finished.
 * Mind that generating overviews can take a **long time**, that's the reason of using CARTO's [Batch SQL PI](https://carto.com/docs/carto-engine/sql-api/batch-queries/) so this process is run asynchronously.
+
+## Geocoding
+
+See ```test_geocoding.py``` for a usage example
+
+There is a sample input csv file in ```test_files/sample.csv```. Columns of the input CSV are fixed, that means that any input CSV to geocode has to have the same structure. Field delimiters can be configured via ```etl.conf``` file.
+
+To run tests do the following:
+
+```
+cp etl.conf.example etl.conf
+# you should configure properly the etl.conf file, specially your HERE API keys
+virtualenv env
+source env/bin/activate
+pip install -r requirements.txt
+pip install pytest
+pip install .
+py.test tests
+```

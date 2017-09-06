@@ -1,4 +1,9 @@
+*DS_Store
 *.pyc
 *.conf
 *.log
 env
+.cache
+.idea
+*random*
+*.zip
