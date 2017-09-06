@@ -1,16 +1,17 @@
 [carto]
-base_url=https://MYUSER.carto.com/api/
+base_url=https://cartouser.carto.com/
 api_key=MYAPIKEY
 table_name=MYTABLE
-columns=COLUMN_1,COLUMN_2,COLUMN_3
+delimiter=,
+columns=column1, column2, column3
 
 [etl]
-chunk_size=5
-max_attempts=3
+chunk_size=500
+max_retries=3
 
 [log]
 file=etl.log
-level=debug
+level=30
 
 [here]
 app_code=YOUR_HERE_APP_CODE
