@@ -27,7 +27,7 @@ api_auth = APIKeyAuthClient(CARTO_BASE_URL, CARTO_API_KEY)
 sql = SQLClient(api_auth)
 bsql = BatchSQLClient(api_auth)
 UTF8 = "utf-8"
-DEFAULT_COORD = 0
+DEFAULT_COORD = None
 MAX_LON = 180
 MAX_LAT = 90
 NULL_VALUE = "NULL"
@@ -86,7 +86,8 @@ class UploadJob(object):
         longitude = self.get_longitude(record)
         latitude = self.get_latitude(record)
 
-        if longitude is None or latitude is None:
+        if longitude is None or latitude is None \
+            or longitude is DEFAULT_COORD or latitude is DEFAULT_COORD:
             return null_result
 
         return "st_transform(st_setsrid(st_makepoint(" + \
@@ -94,37 +95,45 @@ class UploadJob(object):
             format(longitude=longitude, latitude=latitude, srid=self.srid)
 
     def parse_column_value(self, record, column):
-        result = None
+        null_result = NULL_VALUE + ","
+
         try:
             value = record[column]
+        except KeyError:
+            return null_result
+
+        try:
+            result = "{value},".format(value=float(value))
+        except (ValueError, TypeError):
             if value is None or not value.strip():
-                result = NULL_VALUE + ","
+                result = null_result
             else:
-                float(record[column])
-        except ValueError:
-            result = "'{value}',".format(value=value)
-        else:
-            if result is None:
-                result = "{value},".format(value=value)
+                result = "'{value}',".format(value=value)
         return result
 
+
     def get_longitude(self, record):
-        longitude = self.get_coord(record, self.x_column)
-        if abs(longitude) > MAX_LON:
-            return None
+        try:
+            longitude = self.get_coord(record, self.x_column)
+            if abs(longitude) > MAX_LON:
+                return None
+        except TypeError:
+            return DEFAULT_COORD
         return longitude
 
     def get_latitude(self, record):
-        latitude = self.get_coord(record, self.y_column)
-        if abs(latitude) > MAX_LAT:
-            return None
+        try:
+            latitude = self.get_coord(record, self.y_column)
+            if abs(latitude) > MAX_LAT:
+                return None
+        except TypeError:
+            return DEFAULT_COORD
         return latitude
 
     def get_coord(self, record, type):
-        coord = record[type] or DEFAULT_COORD
         try:
-            coord = float(coord)
-        except ValueError:
+            coord = float(record[type]) or DEFAULT_COORD
+        except (ValueError, KeyError):
             coord = DEFAULT_COORD
         return coord
 
