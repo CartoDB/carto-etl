@@ -1,6 +1,10 @@
 import csv
 import logging
-import ConfigParser
+import sys
+if sys.version_info >= (3, 0):
+    import configparser as ConfigParser
+else:
+    import ConfigParser
 import requests
 from os.path import dirname, join
 from datetime import datetime
