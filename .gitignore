@@ -3,7 +3,8 @@
 *.conf
 *.log
 env
-.cache
+.DS_Store
 .idea
+.cache
 *random*
 *.zip

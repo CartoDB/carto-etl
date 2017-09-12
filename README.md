@@ -37,6 +37,8 @@ columns=object_id,privacy,resource_type,country_code
 [etl]
 chunk_size=500
 max_retries=3
+file_encoding=utf-8
+force_no_geometry=false
 
 [log]
 file=etl.log
@@ -60,6 +62,8 @@ Parameters:
 * Related to ETL:
   * `chunk_size`: Number of items to be grouped on a single INSERT or DELETE request. POST requests can deal with several MBs of data (i.e. characters), so this number can go quite high if you wish.
   * `max_attempts`: Number of attempts before giving up on a API request to CARTO.
+  * `file_encoding`: Encoding of the file. By default it's `utf-8`, if your file contains accents or it's in spanish it may be `ISO-8859-1`
+  * `force_no_geometry`: Set this to `true` if your destination table does not have a geometry column
 * Related to logging:
   * `file`: File name (or path) to the log file.
   * `level`: numeric log level for the log file, as in
