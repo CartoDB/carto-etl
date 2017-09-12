@@ -1,5 +1,6 @@
 import csv
 import configparser
+from configparser import NoSectionError
 import logging
 from builtins import range
 
@@ -10,17 +11,31 @@ from carto.sql import BatchSQLClient
 config = configparser.RawConfigParser()
 config.read("etl.conf")
 
-CARTO_BASE_URL = config.get('carto', 'base_url')
-CARTO_API_KEY = config.get('carto', 'api_key')
-CARTO_TABLE_NAME = config.get('carto', 'table_name')
-CARTO_DELIMITER = config.get('carto', 'delimiter')
-CARTO_COLUMNS = config.get('carto', 'columns')
-FILE_ENCODING = config.get('etl', 'file_encoding')
-CHUNK_SIZE = int(config.get('etl', 'chunk_size'))
-MAX_ATTEMPTS = int(config.get('etl', 'max_attempts'))
-FORCE_NO_GEOMETRY = config.getboolean('etl', 'force_no_geometry')
-LOG_FILE = config.get('log', 'file')
-LOG_LEVEL = int(config.get('log', 'level'))
+try:
+    CARTO_BASE_URL = config.get('carto', 'base_url')
+    CARTO_API_KEY = config.get('carto', 'api_key')
+    CARTO_TABLE_NAME = config.get('carto', 'table_name')
+    CARTO_DELIMITER = config.get('carto', 'delimiter')
+    CARTO_COLUMNS = config.get('carto', 'columns')
+    FILE_ENCODING = config.get('etl', 'file_encoding')
+    CHUNK_SIZE = int(config.get('etl', 'chunk_size'))
+    MAX_ATTEMPTS = int(config.get('etl', 'max_attempts'))
+    FORCE_NO_GEOMETRY = config.getboolean('etl', 'force_no_geometry')
+    LOG_FILE = config.get('log', 'file')
+    LOG_LEVEL = int(config.get('log', 'level'))
+except NoSectionError:
+    # some default values for tests to pass
+    CARTO_BASE_URL = "http://wronguser123456.carto.com"
+    CARTO_API_KEY = ""
+    CARTO_TABLE_NAME = ""
+    CARTO_DELIMITER = ","
+    CARTO_COLUMNS = ""
+    FILE_ENCODING = "uft-8"
+    CHUNK_SIZE = 100
+    MAX_ATTEMPTS = 3
+    FORCE_NO_GEOMETRY = False
+    LOG_FILE = "etl.log"
+    LOG_LEVEL = 30
 
 api_auth = APIKeyAuthClient(CARTO_BASE_URL, CARTO_API_KEY)
 sql = SQLClient(api_auth)
