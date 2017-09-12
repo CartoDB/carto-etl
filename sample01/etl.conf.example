@@ -1,0 +1,16 @@
+[carto]
+base_url=https://aromeu.carto.com/
+api_key=c4faca161957ce0bcee88d91f58d3f68a3462b57
+table_name=sample01
+columns=a,lat,lon,b,c,d,e,f,g,h,j,k,l,m,n,o
+delimiter=|
+
+[etl]
+chunk_size= 10
+max_attempts=3
+file_encoding=ISO-8859-1
+force_no_geometry=false
+
+[log]
+file=etl.log
+level=30
