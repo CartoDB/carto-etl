@@ -100,8 +100,8 @@ class UploadJob(object):
         null_result = NULL_VALUE + ","
 
         try:
-            value = record[column]
-        except KeyError:
+            value = self.escape_value(record[column])
+        except Exception:
             return null_result
 
         try:
@@ -113,6 +113,8 @@ class UploadJob(object):
                 result = "'{value}',".format(value=value)
         return result
 
+    def escape_value(self, value):
+        return value.replace("'", "''")
 
     def get_longitude(self, record):
         try:
