@@ -36,7 +36,7 @@ columns=object_id,privacy,resource_type,country_code
 
 [etl]
 chunk_size=500
-max_retries=3
+max_attempts=3
 file_encoding=utf-8
 force_no_geometry=false
 
