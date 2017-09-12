@@ -8,7 +8,7 @@ Ideally, the SDK should be installed on a separate Python virtual environment, f
 $ virtualenv env
 ```
 
-Before working with the SDK, the envirenment needs to be activated:
+Before working with the SDK, the environment needs to be activated:
 
 ```
 $ source env/bin/activate
