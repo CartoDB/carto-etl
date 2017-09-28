@@ -1,5 +1,6 @@
 import csv
 import configparser
+import sys
 from configparser import NoSectionError
 import logging
 from builtins import range
@@ -7,6 +8,20 @@ from builtins import range
 from carto.auth import APIKeyAuthClient
 from carto.sql import SQLClient
 from carto.sql import BatchSQLClient
+
+maxInt = sys.maxsize
+decrement = True
+
+while decrement:
+    # decrease the maxInt value by factor 10
+    # as long as the OverflowError occurs.
+
+    decrement = False
+    try:
+        csv.field_size_limit(maxInt)
+    except OverflowError:
+        maxInt = int(maxInt/10)
+        decrement = True
 
 config = configparser.RawConfigParser()
 config.read("etl.conf")
