@@ -10,6 +10,7 @@ chunk_size=500
 max_attempts=3
 file_encoding=utf-8
 force_no_geometry=false
+force_the_geom=
 
 [log]
 file=etl.log

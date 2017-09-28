@@ -53,3 +53,6 @@ def test_create_wrong_geom_query(upload_job_wrong_geom, record):
 
 def test_create_geom_query(upload_job, record):
     assert upload_job.create_geom_query(record) == "st_transform(st_setsrid(st_makepoint(1.0, 2.0), 4326), 4326),"
+
+def test_create_the_geom_query(upload_job_force_the_geom, record):
+    assert upload_job_force_the_geom.create_geom_query(record) == "'123123123',"

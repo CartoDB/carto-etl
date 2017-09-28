@@ -21,6 +21,7 @@ try:
     CHUNK_SIZE = int(config.get('etl', 'chunk_size'))
     MAX_ATTEMPTS = int(config.get('etl', 'max_attempts'))
     FORCE_NO_GEOMETRY = config.getboolean('etl', 'force_no_geometry')
+    FORCE_THE_GEOM = config.get('etl', 'force_the_geom')
     LOG_FILE = config.get('log', 'file')
     LOG_LEVEL = int(config.get('log', 'level'))
 except NoSectionError:
@@ -34,6 +35,7 @@ except NoSectionError:
     CHUNK_SIZE = 100
     MAX_ATTEMPTS = 3
     FORCE_NO_GEOMETRY = False
+    FORCE_THE_GEOM = None
     LOG_FILE = "etl.log"
     LOG_LEVEL = 30
 
@@ -75,13 +77,14 @@ def chunks(full_list, chunk_size, start_chunk=1, end_chunk=None):
 class UploadJob(object):
     def __init__(self, csv_file_path, x_column="longitude",
                  y_column="latitude", srid=4326, file_encoding=FILE_ENCODING,
-                 force_no_geometry=FORCE_NO_GEOMETRY):
+                 force_no_geometry=FORCE_NO_GEOMETRY, force_the_geom=FORCE_THE_GEOM):
         self.csv_file_path = csv_file_path
         self.x_column = x_column
         self.y_column = y_column
         self.srid = srid
         self.file_encoding = file_encoding
         self.force_no_geometry = force_no_geometry
+        self.force_the_geom = force_the_geom
 
     def run(self):
         raise NotImplemented
@@ -97,6 +100,9 @@ class UploadJob(object):
 
     def create_geom_query(self, record):
         null_result = NULL_VALUE + ","
+        if self.force_the_geom:
+            return self.parse_column_value(record, self.force_the_geom, parse_float=False)
+
         if self.force_no_geometry:
             return null_result
 
@@ -111,7 +117,7 @@ class UploadJob(object):
             "{longitude}, {latitude}), {srid}), 4326),".\
             format(longitude=longitude, latitude=latitude, srid=self.srid)
 
-    def parse_column_value(self, record, column):
+    def parse_column_value(self, record, column, parse_float=True):
         null_result = NULL_VALUE + ","
 
         try:
@@ -120,7 +126,10 @@ class UploadJob(object):
             return null_result
 
         try:
-            result = "{value},".format(value=float(value))
+            if parse_float:
+                result = "{value},".format(value=float(value))
+            else:
+                raise TypeError
         except (ValueError, TypeError):
             if value is None or not value.strip():
                 result = null_result
