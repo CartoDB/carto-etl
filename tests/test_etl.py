@@ -56,3 +56,11 @@ def test_create_geom_query(upload_job, record):
 
 def test_create_the_geom_query(upload_job_force_the_geom, record):
     assert upload_job_force_the_geom.create_geom_query(record) == "'123123123',"
+def test_parse_date(upload_job, record):
+    assert upload_job.parse_column_value(record, "date_col") == "2017-09-01 02:47:25"
+
+def test_parse_wrong_date(upload_job, record):
+    assert upload_job.parse_column_value(record, "wrong_date_col") == "NULL,"
+
+def test_parse_wrong_date2(upload_job, record):
+    assert upload_job.parse_column_value(record, "wrong_date_col2") == "NULL,"

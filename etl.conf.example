@@ -3,7 +3,8 @@ base_url=https://cartouser.carto.com/
 api_key=MYAPIKEY
 table_name=MYTABLE
 delimiter=,
-columns=column1, column2, column3
+columns=column1,column2,column3
+date_columns=column1,column2
 
 [etl]
 chunk_size=500
@@ -11,6 +12,7 @@ max_attempts=3
 file_encoding=utf-8
 force_no_geometry=false
 force_the_geom=
+date_format=
 
 [log]
 file=etl.log

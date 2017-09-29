@@ -4,6 +4,7 @@ import sys
 from configparser import NoSectionError
 import logging
 from builtins import range
+from datetime import datetime
 
 from carto.auth import APIKeyAuthClient
 from carto.sql import SQLClient
@@ -32,6 +33,8 @@ try:
     CARTO_TABLE_NAME = config.get('carto', 'table_name')
     CARTO_DELIMITER = config.get('carto', 'delimiter')
     CARTO_COLUMNS = config.get('carto', 'columns')
+    CARTO_DATE_COLUMNS = config.get('carto', 'date_columns')
+    DATE_FORMAT = config.get('etl', 'date_format')
     FILE_ENCODING = config.get('etl', 'file_encoding')
     CHUNK_SIZE = int(config.get('etl', 'chunk_size'))
     MAX_ATTEMPTS = int(config.get('etl', 'max_attempts'))
@@ -46,6 +49,8 @@ except NoSectionError:
     CARTO_TABLE_NAME = ""
     CARTO_DELIMITER = ","
     CARTO_COLUMNS = ""
+    CARTO_DATE_COLUMNS = "date_col,wrong_date_col,wrong_date_col2"
+    DATE_FORMAT = "%d/%m/%Y %H:%M:%S"
     FILE_ENCODING = "uft-8"
     CHUNK_SIZE = 100
     MAX_ATTEMPTS = 3
@@ -62,6 +67,7 @@ DEFAULT_COORD = None
 MAX_LON = 180
 MAX_LAT = 90
 NULL_VALUE = "NULL"
+CARTO_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 logging.basicConfig(filename=LOG_FILE, filemode='w', level=LOG_LEVEL)
 logger = logging.getLogger('carto-etl')
@@ -141,7 +147,9 @@ class UploadJob(object):
             return null_result
 
         try:
-            if parse_float:
+            if self.is_date_column(column):
+                result = self.parse_date_column(record, column)
+            elif parse_float:
                 result = "{value},".format(value=float(value))
             else:
                 raise TypeError
@@ -151,6 +159,16 @@ class UploadJob(object):
             else:
                 result = "'{value}',".format(value=value)
         return result
+
+    def is_date_column(self, column):
+        return column is not None and CARTO_DATE_COLUMNS is not None and column in CARTO_DATE_COLUMNS.split(',')
+
+    def parse_date_column(self, record, column):
+        try:
+            return datetime.strptime(record[column], DATE_FORMAT).strftime(CARTO_DATE_FORMAT)
+        except Exception:
+            return NULL_VALUE + ","
+
 
     def escape_value(self, value):
         return value.replace("'", "''")

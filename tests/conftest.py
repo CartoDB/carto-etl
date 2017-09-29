@@ -30,5 +30,8 @@ def record():
         "wrong_lon": "181",
         "wrong_lat": "91",
         "unescapable": 1,
-        "the_geom": "123123123"
+        "the_geom": "123123123",
+        "date_col": "01/09/2017 2:47:25",
+        "wrong_date_col": "zzz",
+        "wrong_date_col2": ""
     }
