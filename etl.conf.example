@@ -13,6 +13,8 @@ file_encoding=utf-8
 force_no_geometry=false
 force_the_geom=
 date_format=
+float_comma_separator=,
+float_thousand_separator=.
 
 [log]
 file=etl.log

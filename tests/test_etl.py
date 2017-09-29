@@ -45,6 +45,9 @@ def test_parse_int_column(upload_job, record):
 def test_parse_float_column(upload_job, record):
     assert upload_job.parse_column_value(record, "float_col") == "1.0,"
 
+def test_parse_float_comma_column(upload_job_float, record):
+    assert upload_job_float.parse_column_value(record, "float_comma_col") == "1.5,"
+
 def test_create_geom_query_no_geometry(upload_job_no_geometry, record):
     assert upload_job_no_geometry.create_geom_query(record) == "NULL,"
 

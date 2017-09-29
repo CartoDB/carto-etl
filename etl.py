@@ -35,6 +35,8 @@ try:
     CARTO_COLUMNS = config.get('carto', 'columns')
     CARTO_DATE_COLUMNS = config.get('carto', 'date_columns')
     DATE_FORMAT = config.get('etl', 'date_format')
+    FLOAT_COMMA_SEPARATOR = config.get('etl', 'float_comma_separator')
+    FLOAT_THOUSAND_SEPARATOR = config.get('etl', 'float_thousand_separator')
     FILE_ENCODING = config.get('etl', 'file_encoding')
     CHUNK_SIZE = int(config.get('etl', 'chunk_size'))
     MAX_ATTEMPTS = int(config.get('etl', 'max_attempts'))
@@ -51,6 +53,8 @@ except NoSectionError:
     CARTO_COLUMNS = ""
     CARTO_DATE_COLUMNS = "date_col,wrong_date_col,wrong_date_col2"
     DATE_FORMAT = "%d/%m/%Y %H:%M:%S"
+    FLOAT_COMMA_SEPARATOR = None
+    FLOAT_THOUSAND_SEPARATOR = None
     FILE_ENCODING = "uft-8"
     CHUNK_SIZE = 100
     MAX_ATTEMPTS = 3
@@ -98,7 +102,7 @@ def chunks(full_list, chunk_size, start_chunk=1, end_chunk=None):
 class UploadJob(object):
     def __init__(self, csv_file_path, x_column="longitude",
                  y_column="latitude", srid=4326, file_encoding=FILE_ENCODING,
-                 force_no_geometry=FORCE_NO_GEOMETRY, force_the_geom=FORCE_THE_GEOM):
+                 force_no_geometry=FORCE_NO_GEOMETRY, force_the_geom=FORCE_THE_GEOM, float_comma_separator=FLOAT_COMMA_SEPARATOR, float_thousand_separator=FLOAT_THOUSAND_SEPARATOR):
         self.csv_file_path = csv_file_path
         self.x_column = x_column
         self.y_column = y_column
@@ -106,6 +110,8 @@ class UploadJob(object):
         self.file_encoding = file_encoding
         self.force_no_geometry = force_no_geometry
         self.force_the_geom = force_the_geom
+        self.float_comma_separator = float_comma_separator
+        self.float_thousand_separator = float_thousand_separator
 
     def run(self):
         raise NotImplemented
@@ -150,7 +156,7 @@ class UploadJob(object):
             if self.is_date_column(column):
                 result = self.parse_date_column(record, column)
             elif parse_float:
-                result = "{value},".format(value=float(value))
+                result = "{value},".format(value=self.parse_float_value(value))
             else:
                 raise TypeError
         except (ValueError, TypeError):
@@ -193,10 +199,17 @@ class UploadJob(object):
 
     def get_coord(self, record, type):
         try:
-            coord = float(record[type]) or DEFAULT_COORD
+            coord = self.parse_float_value(record[type]) or DEFAULT_COORD
         except (ValueError, KeyError):
             coord = DEFAULT_COORD
         return coord
+
+    def parse_float_value(self, value):
+        if self.float_thousand_separator:
+            value = value.replace(self.float_thousand_separator, "")
+        if self.float_comma_separator:
+            value = value.replace(self.float_comma_separator, ".")
+        return float(value)
 
     def send(self, query, file_encoding, chunk_num):
         query = query.decode(file_encoding).encode(UTF8)
@@ -264,7 +277,7 @@ class UpdateJob(UploadJob):
                     query += "{column} = ".format(column=column) + value
                 try:
                     id_value = record[self.id_column]
-                    float(id_value)
+                    self.parse_float_value(id_value)
                 except ValueError:
                     query = query[:-1] + " where {id_column} = '{id}'".\
                         format(id_column=self.id_column, id=id_value)
