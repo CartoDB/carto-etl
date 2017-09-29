@@ -35,6 +35,7 @@ try:
     CARTO_COLUMNS = config.get('carto', 'columns')
     CARTO_DATE_COLUMNS = config.get('carto', 'date_columns')
     DATE_FORMAT = config.get('etl', 'date_format')
+    DATETIME_FORMAT = config.get('etl', 'datetime_format')
     FLOAT_COMMA_SEPARATOR = config.get('etl', 'float_comma_separator')
     FLOAT_THOUSAND_SEPARATOR = config.get('etl', 'float_thousand_separator')
     FILE_ENCODING = config.get('etl', 'file_encoding')
@@ -51,8 +52,9 @@ except NoSectionError:
     CARTO_TABLE_NAME = ""
     CARTO_DELIMITER = ","
     CARTO_COLUMNS = ""
-    CARTO_DATE_COLUMNS = "date_col,wrong_date_col,wrong_date_col2"
-    DATE_FORMAT = "%d/%m/%Y %H:%M:%S"
+    CARTO_DATE_COLUMNS = "date_col,date_col2,date_col3,date_col4,wrong_date_col,wrong_date_col2"
+    DATE_FORMAT = "%d/%m/%Y"
+    DATETIME_FORMAT = "%d/%m/%Y %H:%M:%S"
     FLOAT_COMMA_SEPARATOR = None
     FLOAT_THOUSAND_SEPARATOR = None
     FILE_ENCODING = "uft-8"
@@ -156,7 +158,7 @@ class UploadJob(object):
             if self.is_date_column(column):
                 try:
                     result = "'{value}',".format(value=self.parse_date_column(record, column))
-                except TypeError:
+                except ValueError:
                     result = null_result
             elif parse_float:
                 result = "{value},".format(value=self.parse_float_value(value))
@@ -174,10 +176,12 @@ class UploadJob(object):
 
     def parse_date_column(self, record, column):
         try:
-            return datetime.strptime(record[column], DATE_FORMAT).strftime(CARTO_DATE_FORMAT)
+            return datetime.strptime(record[column], DATETIME_FORMAT).strftime(CARTO_DATE_FORMAT)
         except Exception:
-            raise TypeError
-
+            try:
+                return datetime.strptime(record[column], DATE_FORMAT).strftime(CARTO_DATE_FORMAT)
+            except Exception:
+                raise ValueError
 
     def escape_value(self, value):
         return value.replace("'", "''")

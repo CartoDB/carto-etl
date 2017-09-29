@@ -62,6 +62,16 @@ def test_create_the_geom_query(upload_job_force_the_geom, record):
 def test_parse_date(upload_job, record):
     assert upload_job.parse_column_value(record, "date_col") == "'2017-09-01 02:47:25+00',"
 
+def test_parse_date2(upload_job, record):
+    assert upload_job.parse_column_value(record, "date_col2") == "'2017-09-01 00:00:00+00',"
+
+def test_parse_date3(upload_job, record):
+    assert upload_job.parse_column_value(record, "date_col3") == "'2017-09-01 22:47:25+00',"
+
+def test_parse_date4(upload_job, record):
+    with pytest.raises(ValueError):
+        upload_job.parse_date_column(record, "date_col4")
+
 def test_parse_wrong_date(upload_job, record):
     assert upload_job.parse_column_value(record, "wrong_date_col") == "NULL,"
 

@@ -37,6 +37,9 @@ def record():
         "unescapable": 1,
         "the_geom": "123123123",
         "date_col": "01/09/2017 2:47:25",
+        "date_col2": "01/09/2017",
+        "date_col3": "01/09/2017 22:47:25",
+        "date_col4": "01-09-2017 2:47:25",
         "wrong_date_col": "zzz",
         "wrong_date_col2": ""
     }
