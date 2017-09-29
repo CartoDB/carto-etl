@@ -71,7 +71,7 @@ DEFAULT_COORD = None
 MAX_LON = 180
 MAX_LAT = 90
 NULL_VALUE = "NULL"
-CARTO_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+CARTO_DATE_FORMAT = "%Y-%m-%d %H:%M:%S+00"
 
 logging.basicConfig(filename=LOG_FILE, filemode='w', level=LOG_LEVEL)
 logger = logging.getLogger('carto-etl')
@@ -154,7 +154,10 @@ class UploadJob(object):
 
         try:
             if self.is_date_column(column):
-                result = self.parse_date_column(record, column)
+                try:
+                    result = "'{value}',".format(value=self.parse_date_column(record, column))
+                except TypeError:
+                    result = null_result
             elif parse_float:
                 result = "{value},".format(value=self.parse_float_value(value))
             else:
@@ -173,7 +176,7 @@ class UploadJob(object):
         try:
             return datetime.strptime(record[column], DATE_FORMAT).strftime(CARTO_DATE_FORMAT)
         except Exception:
-            return NULL_VALUE + ","
+            raise TypeError
 
 
     def escape_value(self, value):
