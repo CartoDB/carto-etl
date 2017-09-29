@@ -222,7 +222,7 @@ class UploadJob(object):
 
     def send(self, query, file_encoding, chunk_num):
         query = query.decode(file_encoding).encode(UTF8)
-        logger.info("Chunk #{chunk_num}: {query}".
+        logger.debug("Chunk #{chunk_num}: {query}".
                     format(chunk_num=(chunk_num + 1), query=query))
         for retry in range(MAX_ATTEMPTS):
             try:
