@@ -175,6 +175,8 @@ class UploadJob(object):
         return column is not None and CARTO_DATE_COLUMNS is not None and column in CARTO_DATE_COLUMNS.split(',')
 
     def parse_date_column(self, record, column):
+        if not DATE_FORMAT or not DATETIME_FORMAT:
+            raise ValueError
         try:
             return datetime.strptime(record[column], DATETIME_FORMAT).strftime(CARTO_DATE_FORMAT)
         except Exception:
