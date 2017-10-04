@@ -4,12 +4,18 @@ api_key=
 table_name=sample01
 columns=a,lat,lon,b,c,d,e,f,g,h,j,k,l,m,n,o
 delimiter=|
+date_columns=
 
 [etl]
-chunk_size= 10
+chunk_size=10
 max_attempts=3
 file_encoding=ISO-8859-1
 force_no_geometry=false
+force_the_geom=
+date_format=
+datetime_format=
+float_comma_separator=
+float_thousand_separator=
 
 [log]
 file=etl.log

@@ -1,7 +1,5 @@
 import csv
-import configparser
 import sys
-from configparser import NoSectionError
 import logging
 from builtins import range
 from datetime import datetime
@@ -10,64 +8,6 @@ from carto.auth import APIKeyAuthClient
 from carto.sql import SQLClient
 from carto.sql import BatchSQLClient
 
-maxInt = sys.maxsize
-decrement = True
-
-while decrement:
-    # decrease the maxInt value by factor 10
-    # as long as the OverflowError occurs.
-
-    decrement = False
-    try:
-        csv.field_size_limit(maxInt)
-    except OverflowError:
-        maxInt = int(maxInt/10)
-        decrement = True
-
-config = configparser.RawConfigParser()
-config.read("etl.conf")
-
-try:
-    CARTO_BASE_URL = config.get('carto', 'base_url')
-    CARTO_API_KEY = config.get('carto', 'api_key')
-    CARTO_TABLE_NAME = config.get('carto', 'table_name')
-    CARTO_DELIMITER = config.get('carto', 'delimiter')
-    CARTO_COLUMNS = config.get('carto', 'columns')
-    CARTO_DATE_COLUMNS = config.get('carto', 'date_columns')
-    DATE_FORMAT = config.get('etl', 'date_format')
-    DATETIME_FORMAT = config.get('etl', 'datetime_format')
-    FLOAT_COMMA_SEPARATOR = config.get('etl', 'float_comma_separator')
-    FLOAT_THOUSAND_SEPARATOR = config.get('etl', 'float_thousand_separator')
-    FILE_ENCODING = config.get('etl', 'file_encoding')
-    CHUNK_SIZE = int(config.get('etl', 'chunk_size'))
-    MAX_ATTEMPTS = int(config.get('etl', 'max_attempts'))
-    FORCE_NO_GEOMETRY = config.getboolean('etl', 'force_no_geometry')
-    FORCE_THE_GEOM = config.get('etl', 'force_the_geom')
-    LOG_FILE = config.get('log', 'file')
-    LOG_LEVEL = int(config.get('log', 'level'))
-except NoSectionError:
-    # some default values for tests to pass
-    CARTO_BASE_URL = "http://wronguser123456.carto.com"
-    CARTO_API_KEY = ""
-    CARTO_TABLE_NAME = ""
-    CARTO_DELIMITER = ","
-    CARTO_COLUMNS = ""
-    CARTO_DATE_COLUMNS = "date_col,date_col2,date_col3,date_col4,wrong_date_col,wrong_date_col2"
-    DATE_FORMAT = "%d/%m/%Y"
-    DATETIME_FORMAT = "%d/%m/%Y %H:%M:%S"
-    FLOAT_COMMA_SEPARATOR = None
-    FLOAT_THOUSAND_SEPARATOR = None
-    FILE_ENCODING = "uft-8"
-    CHUNK_SIZE = 100
-    MAX_ATTEMPTS = 3
-    FORCE_NO_GEOMETRY = False
-    FORCE_THE_GEOM = None
-    LOG_FILE = "etl.log"
-    LOG_LEVEL = 30
-
-api_auth = APIKeyAuthClient(CARTO_BASE_URL, CARTO_API_KEY)
-sql = SQLClient(api_auth)
-bsql = BatchSQLClient(api_auth)
 UTF8 = "utf-8"
 DEFAULT_COORD = None
 MAX_LON = 180
@@ -75,7 +15,6 @@ MAX_LAT = 90
 NULL_VALUE = "NULL"
 CARTO_DATE_FORMAT = "%Y-%m-%d %H:%M:%S+00"
 
-logging.basicConfig(filename=LOG_FILE, filemode='w', level=LOG_LEVEL)
 logger = logging.getLogger('carto-etl')
 
 
@@ -100,32 +39,55 @@ def chunks(full_list, chunk_size, start_chunk=1, end_chunk=None):
                     return
         yield chunk
 
+def reencode(file, file_encoding):
+    for line in file:
+        yield line.decode(file_encoding).encode(UTF8)
+
 
 class UploadJob(object):
-    def __init__(self, csv_file_path, x_column="longitude",
-                 y_column="latitude", srid=4326, file_encoding=FILE_ENCODING,
-                 force_no_geometry=FORCE_NO_GEOMETRY, force_the_geom=FORCE_THE_GEOM, float_comma_separator=FLOAT_COMMA_SEPARATOR, float_thousand_separator=FLOAT_THOUSAND_SEPARATOR):
+    def __init__(self, csv_file_path, **kwargs):
+        self.__set_max_csv_length()
+        for key, value in kwargs.items():
+            try:
+                if value in ['true', 'false']:
+                    setattr(self, key, bool(value))
+                else:
+                    setattr(self, key, int(value))
+            except Exception:
+                setattr(self, key, value)
+
         self.csv_file_path = csv_file_path
-        self.x_column = x_column
-        self.y_column = y_column
-        self.srid = srid
-        self.file_encoding = file_encoding
-        self.force_no_geometry = force_no_geometry
-        self.force_the_geom = force_the_geom
-        self.float_comma_separator = float_comma_separator
-        self.float_thousand_separator = float_thousand_separator
+
+        if self.api_key:
+            self.api_auth = APIKeyAuthClient(self.base_url, self.api_key)
+            self.sql = SQLClient(self.api_auth)
+            self.bsql = BatchSQLClient(self.api_auth)
+
+    def __set_max_csv_length(self):
+        maxInt = sys.maxsize
+        decrement = True
+
+        while decrement:
+            # decrease the maxInt value by factor 10
+            # as long as the OverflowError occurs.
+            decrement = False
+            try:
+                csv.field_size_limit(maxInt)
+            except OverflowError:
+                maxInt = int(maxInt/10)
+                decrement = True
 
     def run(self):
         raise NotImplemented
 
     def regenerate_overviews(self):
         query = 'select CDB_CreateOverviews(\'{table}\'::regclass)'.\
-            format(table=CARTO_TABLE_NAME)
-        job_result = bsql.create(query)
+            format(table=self.table_name)
+        job_result = self.bsql.create(query)
         return job_result['job_id']
 
     def check_job(self, job_id):
-        return bsql.read(job_id)
+        return self.bsql.read(job_id)
 
     def create_geom_query(self, record):
         null_result = NULL_VALUE + ","
@@ -172,16 +134,16 @@ class UploadJob(object):
         return result
 
     def is_date_column(self, column):
-        return column is not None and CARTO_DATE_COLUMNS is not None and column in CARTO_DATE_COLUMNS.split(',')
+        return column is not None and self.date_columns is not None and column in self.date_columns.split(',')
 
     def parse_date_column(self, record, column):
-        if not DATE_FORMAT or not DATETIME_FORMAT:
+        if not self.date_format or not self.datetime_format:
             raise ValueError
         try:
-            return datetime.strptime(record[column], DATETIME_FORMAT).strftime(CARTO_DATE_FORMAT)
+            return datetime.strptime(record[column], self.datetime_format).strftime(CARTO_DATE_FORMAT)
         except Exception:
             try:
-                return datetime.strptime(record[column], DATE_FORMAT).strftime(CARTO_DATE_FORMAT)
+                return datetime.strptime(record[column], self.date_format).strftime(CARTO_DATE_FORMAT)
             except Exception:
                 raise ValueError
 
@@ -221,12 +183,12 @@ class UploadJob(object):
         return float(value)
 
     def send(self, query, file_encoding, chunk_num):
-        query = query.decode(file_encoding).encode(UTF8)
+        # query = query.decode(file_encoding).encode(UTF8)
         logger.debug("Chunk #{chunk_num}: {query}".
                     format(chunk_num=(chunk_num + 1), query=query))
-        for retry in range(MAX_ATTEMPTS):
+        for retry in range(self.max_attempts):
             try:
-                sql.send(query)
+                self.sql.send(query)
             except Exception as e:
                 logger.warning("Chunk #{chunk_num}: Retrying ({error_msg})".
                                format(chunk_num=(chunk_num + 1), error_msg=e))
@@ -241,17 +203,17 @@ class UploadJob(object):
 
 class InsertJob(UploadJob):
     def run(self, start_chunk=1, end_chunk=None):
-        with open(self.csv_file_path) as f:
-            csv_reader = csv.DictReader(f, delimiter=CARTO_DELIMITER)
+        with open(self.csv_file_path, encoding=self.file_encoding) as f:
+            csv_reader = csv.DictReader(f, delimiter=self.delimiter)
 
             for chunk_num, record_chunk in enumerate(
-                    chunks(csv_reader, CHUNK_SIZE, start_chunk, end_chunk)):
-                cols = CARTO_COLUMNS.lower()
+                    chunks(csv_reader, self.chunk_size, start_chunk, end_chunk)):
+                cols = self.columns.lower()
                 query = "insert into {table_name} (the_geom,{columns}) values".\
-                    format(table_name=CARTO_TABLE_NAME, columns=cols)
+                    format(table_name=self.table_name, columns=cols)
                 for record in record_chunk:
                     query += " (" + self.create_geom_query(record)
-                    for column in CARTO_COLUMNS.split(","):
+                    for column in self.columns.split(","):
                         query += self.parse_column_value(record, column)
                     query = query[:-1] + "),"
 
@@ -265,8 +227,8 @@ class UpdateJob(UploadJob):
         super(UpdateJob, self).__init__(*args, **kwargs)
 
     def run(self, start_row=1, end_row=None):
-        with open(self.csv_file_path) as f:
-            csv_reader = csv.DictReader(f, delimiter=CARTO_DELIMITER)
+        with open(self.csv_file_path, encoding=self.file_encoding) as f:
+            csv_reader = csv.DictReader(f, delimiter=self.delimiter)
 
             for row_num, record in enumerate(csv_reader):
                 if row_num < (start_row - 1):
@@ -276,9 +238,9 @@ class UpdateJob(UploadJob):
                     break
 
                 query = "update {table_name} set ".\
-                        format(table_name=CARTO_TABLE_NAME)
+                        format(table_name=self.table_name)
                 query += " the_geom = " + self.create_geom_query(record)
-                for column in CARTO_COLUMNS.split(","):
+                for column in self.columns.split(","):
                     if column == self.id_column:
                         continue
 
@@ -303,14 +265,14 @@ class DeleteJob(UploadJob):
         super(DeleteJob, self).__init__(*args, **kwargs)
 
     def run(self, start_chunk=1, end_chunk=None):
-        with open(self.csv_file_path) as f:
-            csv_reader = csv.DictReader(f, delimiter=CARTO_DELIMITER)
+        with open(self.csv_file_path, encoding=self.file_encoding) as f:
+            csv_reader = csv.DictReader(f, delimiter=self.delimiter)
 
             for chunk_num, record_chunk in enumerate(
-                    chunks(csv_reader, CHUNK_SIZE, start_chunk, end_chunk)):
+                    chunks(csv_reader, self.chunk_size, start_chunk, end_chunk)):
                 id_column = self.id_column.lower()
                 query = "delete from {table_name} where {column} in (".\
-                    format(table_name=CARTO_TABLE_NAME, column=id_column)
+                    format(table_name=self.table_name, column=id_column)
                 for record in record_chunk:
                     query += self.parse_column_value(record, self.id_column)
                 query = query[:-1] + ")"

@@ -1,9 +1,12 @@
 import logging
 import sys
-import ConfigParser
+try:
+    import ConfigParser
+except Exception:
+    import configparser as ConfigParser
 
 sys.path.insert(0, '..')
-from etl import UpdateJob, InsertJob, DeleteJob
+from etl.etl import UpdateJob, InsertJob, DeleteJob
 
 
 config = ConfigParser.RawConfigParser()
@@ -34,12 +37,21 @@ if len(sys.argv) < 2:
     exit(1)
 action = sys.argv[1]
 
+def flatten(config, kwargs):
+    for key in config:
+        if isinstance(config[key], dict):
+            flatten(config[key], kwargs)
+        else:
+            kwargs[key] = config[key]
+    return kwargs
+
+kwargs = flatten(config._sections, {})
 if action == 'insert':
-    job = InsertJob("sample01.csv", "lon", "lat", "4326")
+    job = InsertJob("sample01.csv", **kwargs)
 elif action == 'update':
-    job = UpdateJob("a", "sample01.csv", "lon", "lat", "4326")
+    job = UpdateJob("a", "sample01.csv", **kwargs)
 elif action == 'delete':
-    job = DeleteJob("a", "sample01.csv", "lon", "lat", "4326")
+    job = DeleteJob("a", "sample01.csv", **kwargs)
 
 if job is not None:
     job.run()

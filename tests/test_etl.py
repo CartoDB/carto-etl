@@ -1,13 +1,14 @@
 import pytest
 
-from etl import UploadJob
-
 
 def test_config_ok():
     assert 1 == 1
 
 def test_upload_job(upload_job):
     assert upload_job is not None
+
+def test_upload_job_args(upload_job_args):
+    assert upload_job_args.x_column == "longitude"
 
 def test_upload_job_no_geometry(upload_job_no_geometry):
     assert upload_job_no_geometry is not None
