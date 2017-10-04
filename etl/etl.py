@@ -50,7 +50,7 @@ class UploadJob(object):
         for key, value in kwargs.items():
             try:
                 if value in ['true', 'false']:
-                    setattr(self, key, bool(value))
+                    setattr(self, key, self.__str2bool(value))
                 else:
                     setattr(self, key, int(value))
             except Exception:
@@ -62,6 +62,11 @@ class UploadJob(object):
             self.api_auth = APIKeyAuthClient(self.base_url, self.api_key)
             self.sql = SQLClient(self.api_auth)
             self.bsql = BatchSQLClient(self.api_auth)
+
+    def __str2bool(self, val):
+        if val in ['true', 'True']:
+            return True
+        return False
 
     def __set_max_csv_length(self):
         maxInt = sys.maxsize
