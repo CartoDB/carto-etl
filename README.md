@@ -1,5 +1,7 @@
 # SDK for ETL with CARTO's SQL API
 
+![](https://travis-ci.org/CartoDB/carto-etl.svg?branch=tests)
+
 ## Installation and usage
 
 Ideally, the SDK should be installed on a separate Python virtual environment, for instance:
@@ -76,7 +78,7 @@ Parameters:
   * `datetime_format`: Format of the `date_columns` in case they are timestamps expressed in the `datetime` Python module supported formats
   * `float_comma_separator`: Character used as comma separator in float columns
   * `float_thousand_separator`: Character used as thousand separator in float columns
-* Related to logging:  
+* Related to logging:
   * `file`: File name (or path) to the log file.
   * `level`: numeric log level for the log file, as in
 |  Level | Numeric value |
