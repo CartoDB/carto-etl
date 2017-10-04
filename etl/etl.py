@@ -28,6 +28,7 @@ DEFAULT_DATE_FORMAT=None
 DEFAULT_DATETIME_FORMAT=None
 DEFAULT_FLOAT_COMMA_SEPARATOR=None
 DEFAULT_FLOAT_THOUSAND_SEPARATOR=None
+DEFAULT_DATE_COLUMNS=None
 
 logger = logging.getLogger('carto-etl')
 
@@ -83,15 +84,16 @@ class UploadJob(object):
         self.x_column = DEFAULT_X_COLUMN
         self.y_column = DEFAULT_Y_COLUMN
         self.srid = DEFAULT_SRID
-        self.chunk_size=DEFAULT_CHUNK_SIZE
-        self.max_attempts=DEFAULT_MAX_ATTEMPTS
-        self.file_encoding=DEFAULT_FILE_ENCOFING
-        self.force_no_geometry=DEFAULT_FORCE_NO_GEOMETRY
-        self.force_the_geom=DEFAULT_FORCE_THE_GEOM
-        self.date_format=DEFAULT_DATE_FORMAT
-        self.datetime_format=DEFAULT_DATETIME_FORMAT
-        self.float_comma_separator=DEFAULT_FLOAT_COMMA_SEPARATOR
-        self.float_thousand_separator=DEFAULT_FLOAT_THOUSAND_SEPARATOR
+        self.chunk_size = DEFAULT_CHUNK_SIZE
+        self.max_attempts = DEFAULT_MAX_ATTEMPTS
+        self.file_encoding = DEFAULT_FILE_ENCOFING
+        self.force_no_geometry = DEFAULT_FORCE_NO_GEOMETRY
+        self.force_the_geom = DEFAULT_FORCE_THE_GEOM
+        self.date_format = DEFAULT_DATE_FORMAT
+        self.datetime_format = DEFAULT_DATETIME_FORMAT
+        self.float_comma_separator = DEFAULT_FLOAT_COMMA_SEPARATOR
+        self.float_thousand_separator = DEFAULT_FLOAT_THOUSAND_SEPARATOR
+        self.date_columns = DEFAULT_DATE_COLUMNS
 
     def __str2bool(self, val):
         if val in ['true', 'True']:
