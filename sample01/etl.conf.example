@@ -5,6 +5,9 @@ table_name=sample01
 columns=a,lat,lon,b,c,d,e,f,g,h,j,k,l,m,n,o
 delimiter=|
 date_columns=
+x_column=lon
+y_column=lat
+srid=4326
 
 [etl]
 chunk_size=10

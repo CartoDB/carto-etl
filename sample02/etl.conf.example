@@ -5,6 +5,9 @@ table_name=sample02
 columns=a,b,c,d,e,f,g,h,i
 delimiter=,
 date_columns=
+x_column=
+y_column=
+srid=
 
 [etl]
 chunk_size= 10

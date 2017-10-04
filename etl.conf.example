@@ -5,6 +5,9 @@ table_name=MYTABLE
 delimiter=,
 columns=column1,column2,column3
 date_columns=column1,column2
+x_column=lon
+y_column=lat
+srid=4326
 
 [etl]
 chunk_size=500

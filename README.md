@@ -36,6 +36,9 @@ table_name=samples
 delimiter=,
 columns=object_id,privacy,resource_type,country_code,date
 date_columns=date
+x_column=lon
+y_column=lat
+srid=4326
 
 [etl]
 chunk_size=500
@@ -68,6 +71,9 @@ Parameters:
   * `delimiter`: character used as delimiter in the CSV file, tipycally a comma
   * `columns`: Columns of the CSV file that will be transferred to CARTO.
   * `date_columns`: Columns of the CSV file that represent a date or timestamp and have a different format than the CARTO date format (%Y-%m-%d %H:%M:%S+00), so that they need to be transformed. Columns in `date_columns` must also appear in the `columns` key. If `date_columns` is set, then either `date_format` or `datetime_format` must be properly set to indicate the format of the `date_columns` in the CSV file
+  * `x_column`: Name of the column that contains the x coordinate
+  * `y_column`: Name of the column that contains the y coordinate
+  * `srid`: The SRID of the geometry
 * Related to ETL:
   * `chunk_size`: Number of items to be grouped on a single INSERT or DELETE request. POST requests can deal with several MBs of data (i.e. characters), so this number can go quite high if you wish.
   * `max_attempts`: Number of attempts before giving up on a API request to CARTO.
