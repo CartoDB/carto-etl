@@ -82,8 +82,12 @@ class UploadJob(object):
                 maxInt = int(maxInt/10)
                 decrement = True
 
-    def run(self):
-        raise NotImplemented
+    def run(self, start_chunk=1, end_chunk=None):
+        if not isinstance(self.csv_file_path, str):
+            self.do_run(self.csv_file_path, start_chunk, end_chunk)
+        else:
+            with open(self.csv_file_path, encoding=self.file_encoding) as f:
+                self.do_run(f, start_chunk, end_chunk)
 
     def regenerate_overviews(self):
         query = 'select CDB_CreateOverviews(\'{table}\'::regclass)'.\
@@ -207,23 +211,21 @@ class UploadJob(object):
 
 
 class InsertJob(UploadJob):
-    def run(self, start_chunk=1, end_chunk=None):
-        with open(self.csv_file_path, encoding=self.file_encoding) as f:
-            csv_reader = csv.DictReader(f, delimiter=self.delimiter)
-
-            for chunk_num, record_chunk in enumerate(
+    def do_run(self, stream, start_chunk, end_chunk):
+        csv_reader = csv.DictReader(stream, delimiter=self.delimiter)
+        for chunk_num, record_chunk in enumerate(
                     chunks(csv_reader, self.chunk_size, start_chunk, end_chunk)):
-                cols = self.columns.lower()
-                query = "insert into {table_name} (the_geom,{columns}) values".\
-                    format(table_name=self.table_name, columns=cols)
-                for record in record_chunk:
-                    query += " (" + self.create_geom_query(record)
-                    for column in self.columns.split(","):
-                        query += self.parse_column_value(record, column)
-                    query = query[:-1] + "),"
+            cols = self.columns.lower()
+            query = "insert into {table_name} (the_geom,{columns}) values".\
+                format(table_name=self.table_name, columns=cols)
+            for record in record_chunk:
+                query += " (" + self.create_geom_query(record)
+                for column in self.columns.split(","):
+                    query += self.parse_column_value(record, column)
+                query = query[:-1] + "),"
 
-                query = query[:-1]
-                self.send(query, self.file_encoding, chunk_num)
+            query = query[:-1]
+            self.send(query, self.file_encoding, chunk_num)
 
 
 class UpdateJob(UploadJob):
@@ -231,37 +233,36 @@ class UpdateJob(UploadJob):
         self.id_column = id_column
         super(UpdateJob, self).__init__(*args, **kwargs)
 
-    def run(self, start_row=1, end_row=None):
-        with open(self.csv_file_path, encoding=self.file_encoding) as f:
-            csv_reader = csv.DictReader(f, delimiter=self.delimiter)
+    def do_run(self, stream, start_row=1, end_row=None):
+        csv_reader = csv.DictReader(stream, delimiter=self.delimiter)
 
-            for row_num, record in enumerate(csv_reader):
-                if row_num < (start_row - 1):
+        for row_num, record in enumerate(csv_reader):
+            if row_num < (start_row - 1):
+                continue
+
+            if end_row is not None and row_num >= end_row:
+                break
+
+            query = "update {table_name} set ".\
+                    format(table_name=self.table_name)
+            query += " the_geom = " + self.create_geom_query(record)
+            for column in self.columns.split(","):
+                if column == self.id_column:
                     continue
 
-                if end_row is not None and row_num >= end_row:
-                    break
+                value = self.parse_column_value(record, column)
+                query += "{column} = ".format(column=column) + value
+            try:
+                id_value = record[self.id_column]
+                self.parse_float_value(id_value)
+            except ValueError:
+                query = query[:-1] + " where {id_column} = '{id}'".\
+                    format(id_column=self.id_column, id=id_value)
+            else:
+                query = query[:-1] + " where {id_column} = {id}".\
+                    format(id_column=self.id_column, id=id_value)
 
-                query = "update {table_name} set ".\
-                        format(table_name=self.table_name)
-                query += " the_geom = " + self.create_geom_query(record)
-                for column in self.columns.split(","):
-                    if column == self.id_column:
-                        continue
-
-                    value = self.parse_column_value(record, column)
-                    query += "{column} = ".format(column=column) + value
-                try:
-                    id_value = record[self.id_column]
-                    self.parse_float_value(id_value)
-                except ValueError:
-                    query = query[:-1] + " where {id_column} = '{id}'".\
-                        format(id_column=self.id_column, id=id_value)
-                else:
-                    query = query[:-1] + " where {id_column} = {id}".\
-                        format(id_column=self.id_column, id=id_value)
-
-                self.send(query, self.file_encoding, row_num)
+            self.send(query, self.file_encoding, row_num)
 
 
 class DeleteJob(UploadJob):
@@ -269,17 +270,16 @@ class DeleteJob(UploadJob):
         self.id_column = id_column
         super(DeleteJob, self).__init__(*args, **kwargs)
 
-    def run(self, start_chunk=1, end_chunk=None):
-        with open(self.csv_file_path, encoding=self.file_encoding) as f:
-            csv_reader = csv.DictReader(f, delimiter=self.delimiter)
+    def do_run(self, stream, start_chunk, end_chunk):
+        csv_reader = csv.DictReader(stream, delimiter=self.delimiter)
 
-            for chunk_num, record_chunk in enumerate(
-                    chunks(csv_reader, self.chunk_size, start_chunk, end_chunk)):
-                id_column = self.id_column.lower()
-                query = "delete from {table_name} where {column} in (".\
-                    format(table_name=self.table_name, column=id_column)
-                for record in record_chunk:
-                    query += self.parse_column_value(record, self.id_column)
-                query = query[:-1] + ")"
+        for chunk_num, record_chunk in enumerate(
+                chunks(csv_reader, self.chunk_size, start_chunk, end_chunk)):
+            id_column = self.id_column.lower()
+            query = "delete from {table_name} where {column} in (".\
+                format(table_name=self.table_name, column=id_column)
+            for record in record_chunk:
+                query += self.parse_column_value(record, self.id_column)
+            query = query[:-1] + ")"
 
-                self.send(query, self.file_encoding, chunk_num)
+            self.send(query, self.file_encoding, chunk_num)
