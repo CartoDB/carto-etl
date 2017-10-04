@@ -1,12 +1,28 @@
 import csv
 import configparser
+import sys
 from configparser import NoSectionError
 import logging
 from builtins import range
+from datetime import datetime
 
 from carto.auth import APIKeyAuthClient
 from carto.sql import SQLClient
 from carto.sql import BatchSQLClient
+
+maxInt = sys.maxsize
+decrement = True
+
+while decrement:
+    # decrease the maxInt value by factor 10
+    # as long as the OverflowError occurs.
+
+    decrement = False
+    try:
+        csv.field_size_limit(maxInt)
+    except OverflowError:
+        maxInt = int(maxInt/10)
+        decrement = True
 
 config = configparser.RawConfigParser()
 config.read("etl.conf")
@@ -17,10 +33,16 @@ try:
     CARTO_TABLE_NAME = config.get('carto', 'table_name')
     CARTO_DELIMITER = config.get('carto', 'delimiter')
     CARTO_COLUMNS = config.get('carto', 'columns')
+    CARTO_DATE_COLUMNS = config.get('carto', 'date_columns')
+    DATE_FORMAT = config.get('etl', 'date_format')
+    DATETIME_FORMAT = config.get('etl', 'datetime_format')
+    FLOAT_COMMA_SEPARATOR = config.get('etl', 'float_comma_separator')
+    FLOAT_THOUSAND_SEPARATOR = config.get('etl', 'float_thousand_separator')
     FILE_ENCODING = config.get('etl', 'file_encoding')
     CHUNK_SIZE = int(config.get('etl', 'chunk_size'))
     MAX_ATTEMPTS = int(config.get('etl', 'max_attempts'))
     FORCE_NO_GEOMETRY = config.getboolean('etl', 'force_no_geometry')
+    FORCE_THE_GEOM = config.get('etl', 'force_the_geom')
     LOG_FILE = config.get('log', 'file')
     LOG_LEVEL = int(config.get('log', 'level'))
 except NoSectionError:
@@ -30,10 +52,16 @@ except NoSectionError:
     CARTO_TABLE_NAME = ""
     CARTO_DELIMITER = ","
     CARTO_COLUMNS = ""
+    CARTO_DATE_COLUMNS = "date_col,date_col2,date_col3,date_col4,wrong_date_col,wrong_date_col2"
+    DATE_FORMAT = "%d/%m/%Y"
+    DATETIME_FORMAT = "%d/%m/%Y %H:%M:%S"
+    FLOAT_COMMA_SEPARATOR = None
+    FLOAT_THOUSAND_SEPARATOR = None
     FILE_ENCODING = "uft-8"
     CHUNK_SIZE = 100
     MAX_ATTEMPTS = 3
     FORCE_NO_GEOMETRY = False
+    FORCE_THE_GEOM = None
     LOG_FILE = "etl.log"
     LOG_LEVEL = 30
 
@@ -45,6 +73,7 @@ DEFAULT_COORD = None
 MAX_LON = 180
 MAX_LAT = 90
 NULL_VALUE = "NULL"
+CARTO_DATE_FORMAT = "%Y-%m-%d %H:%M:%S+00"
 
 logging.basicConfig(filename=LOG_FILE, filemode='w', level=LOG_LEVEL)
 logger = logging.getLogger('carto-etl')
@@ -75,13 +104,16 @@ def chunks(full_list, chunk_size, start_chunk=1, end_chunk=None):
 class UploadJob(object):
     def __init__(self, csv_file_path, x_column="longitude",
                  y_column="latitude", srid=4326, file_encoding=FILE_ENCODING,
-                 force_no_geometry=FORCE_NO_GEOMETRY):
+                 force_no_geometry=FORCE_NO_GEOMETRY, force_the_geom=FORCE_THE_GEOM, float_comma_separator=FLOAT_COMMA_SEPARATOR, float_thousand_separator=FLOAT_THOUSAND_SEPARATOR):
         self.csv_file_path = csv_file_path
         self.x_column = x_column
         self.y_column = y_column
         self.srid = srid
         self.file_encoding = file_encoding
         self.force_no_geometry = force_no_geometry
+        self.force_the_geom = force_the_geom
+        self.float_comma_separator = float_comma_separator
+        self.float_thousand_separator = float_thousand_separator
 
     def run(self):
         raise NotImplemented
@@ -97,6 +129,9 @@ class UploadJob(object):
 
     def create_geom_query(self, record):
         null_result = NULL_VALUE + ","
+        if self.force_the_geom:
+            return self.parse_column_value(record, self.force_the_geom, parse_float=False)
+
         if self.force_no_geometry:
             return null_result
 
@@ -111,7 +146,7 @@ class UploadJob(object):
             "{longitude}, {latitude}), {srid}), 4326),".\
             format(longitude=longitude, latitude=latitude, srid=self.srid)
 
-    def parse_column_value(self, record, column):
+    def parse_column_value(self, record, column, parse_float=True):
         null_result = NULL_VALUE + ","
 
         try:
@@ -120,13 +155,35 @@ class UploadJob(object):
             return null_result
 
         try:
-            result = "{value},".format(value=float(value))
+            if self.is_date_column(column):
+                try:
+                    result = "'{value}',".format(value=self.parse_date_column(record, column))
+                except ValueError:
+                    result = null_result
+            elif parse_float:
+                result = "{value},".format(value=self.parse_float_value(value))
+            else:
+                raise TypeError
         except (ValueError, TypeError):
             if value is None or not value.strip():
                 result = null_result
             else:
                 result = "'{value}',".format(value=value)
         return result
+
+    def is_date_column(self, column):
+        return column is not None and CARTO_DATE_COLUMNS is not None and column in CARTO_DATE_COLUMNS.split(',')
+
+    def parse_date_column(self, record, column):
+        if not DATE_FORMAT or not DATETIME_FORMAT:
+            raise ValueError
+        try:
+            return datetime.strptime(record[column], DATETIME_FORMAT).strftime(CARTO_DATE_FORMAT)
+        except Exception:
+            try:
+                return datetime.strptime(record[column], DATE_FORMAT).strftime(CARTO_DATE_FORMAT)
+            except Exception:
+                raise ValueError
 
     def escape_value(self, value):
         return value.replace("'", "''")
@@ -151,14 +208,21 @@ class UploadJob(object):
 
     def get_coord(self, record, type):
         try:
-            coord = float(record[type]) or DEFAULT_COORD
+            coord = self.parse_float_value(record[type]) or DEFAULT_COORD
         except (ValueError, KeyError):
             coord = DEFAULT_COORD
         return coord
 
+    def parse_float_value(self, value):
+        if self.float_thousand_separator:
+            value = value.replace(self.float_thousand_separator, "")
+        if self.float_comma_separator:
+            value = value.replace(self.float_comma_separator, ".")
+        return float(value)
+
     def send(self, query, file_encoding, chunk_num):
         query = query.decode(file_encoding).encode(UTF8)
-        logger.info("Chunk #{chunk_num}: {query}".
+        logger.debug("Chunk #{chunk_num}: {query}".
                     format(chunk_num=(chunk_num + 1), query=query))
         for retry in range(MAX_ATTEMPTS):
             try:
@@ -222,7 +286,7 @@ class UpdateJob(UploadJob):
                     query += "{column} = ".format(column=column) + value
                 try:
                     id_value = record[self.id_column]
-                    float(id_value)
+                    self.parse_float_value(id_value)
                 except ValueError:
                     query = query[:-1] + " where {id_column} = '{id}'".\
                         format(id_column=self.id_column, id=id_value)

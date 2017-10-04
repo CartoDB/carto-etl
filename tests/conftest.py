@@ -15,6 +15,14 @@ def upload_job_wrong_geom():
     return UploadJob("test.csv", "wrong_lon", "wrong_lat", "4326")
 
 @pytest.fixture(scope="session")
+def upload_job_force_the_geom():
+    return UploadJob("test.csv", force_the_geom='the_geom')
+
+@pytest.fixture(scope="session")
+def upload_job_float():
+    return UploadJob("test.csv", float_comma_separator=",", float_thousand_separator=".")
+
+@pytest.fixture(scope="session")
 def record():
     return {
         "lon": "1",
@@ -22,8 +30,16 @@ def record():
         "text_col": "a",
         "int_col": "1",
         "float_col": "1.0",
+        "float_comma_col": "1,5",
         "escape_col": "t'est",
         "wrong_lon": "181",
         "wrong_lat": "91",
-        "unescapable": 1
+        "unescapable": 1,
+        "the_geom": "123123123",
+        "date_col": "01/09/2017 2:47:25",
+        "date_col2": "01/09/2017",
+        "date_col3": "01/09/2017 22:47:25",
+        "date_col4": "01-09-2017 2:47:25",
+        "wrong_date_col": "zzz",
+        "wrong_date_col2": ""
     }
