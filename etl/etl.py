@@ -15,6 +15,20 @@ MAX_LAT = 90
 NULL_VALUE = "NULL"
 CARTO_DATE_FORMAT = "%Y-%m-%d %H:%M:%S+00"
 
+DEFAULT_DELIMITER = ","
+DEFAULT_X_COLUMN = "lon"
+DEFAULT_Y_COLUMN = "lat"
+DEFAULT_SRID = 4326
+DEFAULT_CHUNK_SIZE=1000
+DEFAULT_MAX_ATTEMPTS=3
+DEFAULT_FILE_ENCOFING=UTF8
+DEFAULT_FORCE_NO_GEOMETRY=False
+DEFAULT_FORCE_THE_GEOM=None
+DEFAULT_DATE_FORMAT=None
+DEFAULT_DATETIME_FORMAT=None
+DEFAULT_FLOAT_COMMA_SEPARATOR=None
+DEFAULT_FLOAT_THOUSAND_SEPARATOR=None
+
 logger = logging.getLogger('carto-etl')
 
 
@@ -47,6 +61,7 @@ def reencode(file, file_encoding):
 class UploadJob(object):
     def __init__(self, csv_file_path, **kwargs):
         self.__set_max_csv_length()
+        self.__set_defaults()
         for key, value in kwargs.items():
             try:
                 if value in ['true', 'false']:
@@ -62,6 +77,21 @@ class UploadJob(object):
             self.api_auth = APIKeyAuthClient(self.base_url, self.api_key)
             self.sql = SQLClient(self.api_auth)
             self.bsql = BatchSQLClient(self.api_auth)
+
+    def __set_defaults(self):
+        self.delimiter = DEFAULT_DELIMITER
+        self.x_column = DEFAULT_X_COLUMN
+        self.y_column = DEFAULT_Y_COLUMN
+        self.srid = DEFAULT_SRID
+        self.chunk_size=DEFAULT_CHUNK_SIZE
+        self.max_attempts=DEFAULT_MAX_ATTEMPTS
+        self.file_encoding=DEFAULT_FILE_ENCOFING
+        self.force_no_geometry=DEFAULT_FORCE_NO_GEOMETRY
+        self.force_the_geom=DEFAULT_FORCE_THE_GEOM
+        self.date_format=DEFAULT_DATE_FORMAT
+        self.datetime_format=DEFAULT_DATETIME_FORMAT
+        self.float_comma_separator=DEFAULT_FLOAT_COMMA_SEPARATOR
+        self.float_thousand_separator=DEFAULT_FLOAT_THOUSAND_SEPARATOR
 
     def __str2bool(self, val):
         if val in ['true', 'True']:
