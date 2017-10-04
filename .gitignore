@@ -2,6 +2,7 @@
 *.pyc
 *.conf
 *.log
+*.egg-info
 env
 .DS_Store
 .idea
