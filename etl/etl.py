@@ -58,6 +58,7 @@ def _count(stream):
     lines = 0
     for line in stream:
         lines += 1
+    stream.seek(0)
     return lines
 
 def reencode(file, file_encoding):
@@ -125,7 +126,8 @@ class UploadJob(object):
         if not isinstance(self.csv_file_path, str):
             self.do_run(self.csv_file_path, start_chunk, end_chunk)
         else:
-            with open(self.csv_file_path, encoding=self.file_encoding) as f:
+            import ipdb; ipdb.set_trace(context=40)
+            with open(self.csv_file_path) as f:
                 self.do_run(f, start_chunk, end_chunk)
 
     def notify(self, message_type, message):
@@ -238,6 +240,7 @@ class UploadJob(object):
         return float(value)
 
     def send(self, query, file_encoding, chunk_num):
+        query = query.decode(file_encoding).encode(UTF8)
         logger.debug("Chunk #{chunk_num}: {query}".
                     format(chunk_num=(chunk_num + 1), query=query))
         for retry in range(self.max_attempts):
@@ -255,7 +258,7 @@ class UploadJob(object):
         else:
             logger.error("Chunk #{chunk_num}: Failed!)".
                          format(chunk_num=(chunk_num + 1)))
-            self.notify('error', "Failed " + chunk_num + 1)
+            self.notify('error', "Failed " + str(chunk_num + 1))
 
 
 class InsertJob(UploadJob):
