@@ -54,7 +54,7 @@ def chunks(full_list, chunk_size, start_chunk=1, end_chunk=None):
                     return
         yield chunk
 
-def count(stream):
+def _count(stream):
     lines = 0
     for line in stream:
         lines += 1
@@ -128,10 +128,10 @@ class UploadJob(object):
             with open(self.csv_file_path, encoding=self.file_encoding) as f:
                 self.do_run(f, start_chunk, end_chunk)
 
-    def notify(self, type, message):
+    def notify(self, message_type, message):
         observer = getattr(self, "observer", None)
         if callable(observer):
-            observer({"type": type, "msg": message})
+            observer({"type": message_type, "msg": str(message)})
             return True
         return False
 
@@ -260,7 +260,7 @@ class UploadJob(object):
 
 class InsertJob(UploadJob):
     def do_run(self, stream, start_chunk, end_chunk):
-        self.notify('total', count(stream) / self.chunk_size)
+        self.notify('total', _count(stream) / int(self.chunk_size))
         csv_reader = csv.DictReader(stream, delimiter=self.delimiter)
         for chunk_num, record_chunk in enumerate(
                     chunks(csv_reader, self.chunk_size, start_chunk, end_chunk)):
@@ -283,7 +283,7 @@ class UpdateJob(UploadJob):
         super(UpdateJob, self).__init__(*args, **kwargs)
 
     def do_run(self, stream, start_row=1, end_row=None):
-        self.notify('total', count(stream))
+        self.notify('total', _count(stream))
         csv_reader = csv.DictReader(stream, delimiter=self.delimiter)
 
         for row_num, record in enumerate(csv_reader):
@@ -321,7 +321,7 @@ class DeleteJob(UploadJob):
         super(DeleteJob, self).__init__(*args, **kwargs)
 
     def do_run(self, stream, start_chunk, end_chunk):
-        self.notify('total', count(stream) / self.chunk_size)
+        self.notify('total', _count(stream) / int(self.chunk_size))
         csv_reader = csv.DictReader(stream, delimiter=self.delimiter)
 
         for chunk_num, record_chunk in enumerate(
