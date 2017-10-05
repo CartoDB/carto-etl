@@ -78,3 +78,6 @@ def test_parse_wrong_date(upload_job, record):
 
 def test_parse_wrong_date2(upload_job, record):
     assert upload_job.parse_column_value(record, "wrong_date_col2") == "NULL,"
+
+def test_job_observer(upload_job_observer, record):
+    assert upload_job_observer.notify("test", "whatever") == True

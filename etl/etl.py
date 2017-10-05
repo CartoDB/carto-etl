@@ -54,6 +54,12 @@ def chunks(full_list, chunk_size, start_chunk=1, end_chunk=None):
                     return
         yield chunk
 
+def count(stream):
+    lines = 0
+    for line in stream:
+        lines += 1
+    return lines
+
 def reencode(file, file_encoding):
     for line in file:
         yield line.decode(file_encoding).encode(UTF8)
@@ -94,6 +100,7 @@ class UploadJob(object):
         self.float_comma_separator = DEFAULT_FLOAT_COMMA_SEPARATOR
         self.float_thousand_separator = DEFAULT_FLOAT_THOUSAND_SEPARATOR
         self.date_columns = DEFAULT_DATE_COLUMNS
+        self.observer = None
 
     def __str2bool(self, val):
         if val in ['true', 'True']:
@@ -120,6 +127,13 @@ class UploadJob(object):
         else:
             with open(self.csv_file_path, encoding=self.file_encoding) as f:
                 self.do_run(f, start_chunk, end_chunk)
+
+    def notify(self, type, message):
+        observer = getattr(self, "observer", None)
+        if callable(observer):
+            observer({"type": type, "msg": message})
+            return True
+        return False
 
     def regenerate_overviews(self):
         query = 'select CDB_CreateOverviews(\'{table}\'::regclass)'.\
@@ -224,7 +238,6 @@ class UploadJob(object):
         return float(value)
 
     def send(self, query, file_encoding, chunk_num):
-        # query = query.decode(file_encoding).encode(UTF8)
         logger.debug("Chunk #{chunk_num}: {query}".
                     format(chunk_num=(chunk_num + 1), query=query))
         for retry in range(self.max_attempts):
@@ -233,17 +246,21 @@ class UploadJob(object):
             except Exception as e:
                 logger.warning("Chunk #{chunk_num}: Retrying ({error_msg})".
                                format(chunk_num=(chunk_num + 1), error_msg=e))
+                self.notify('error', e)
             else:
                 logger.info("Chunk #{chunk_num}: Success!".
                             format(chunk_num=(chunk_num + 1)))
+                self.notify('progress', chunk_num + 1)
                 break
         else:
             logger.error("Chunk #{chunk_num}: Failed!)".
                          format(chunk_num=(chunk_num + 1)))
+            self.notify('error', "Failed " + chunk_num + 1)
 
 
 class InsertJob(UploadJob):
     def do_run(self, stream, start_chunk, end_chunk):
+        self.notify('total', self.count(stream) / self.chunk_size)
         csv_reader = csv.DictReader(stream, delimiter=self.delimiter)
         for chunk_num, record_chunk in enumerate(
                     chunks(csv_reader, self.chunk_size, start_chunk, end_chunk)):
@@ -266,6 +283,7 @@ class UpdateJob(UploadJob):
         super(UpdateJob, self).__init__(*args, **kwargs)
 
     def do_run(self, stream, start_row=1, end_row=None):
+        self.notify('total', self.count(stream))
         csv_reader = csv.DictReader(stream, delimiter=self.delimiter)
 
         for row_num, record in enumerate(csv_reader):
@@ -303,6 +321,7 @@ class DeleteJob(UploadJob):
         super(DeleteJob, self).__init__(*args, **kwargs)
 
     def do_run(self, stream, start_chunk, end_chunk):
+        self.notify('total', self.count(stream) / self.chunk_size)
         csv_reader = csv.DictReader(stream, delimiter=self.delimiter)
 
         for chunk_num, record_chunk in enumerate(

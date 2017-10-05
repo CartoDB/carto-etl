@@ -155,6 +155,9 @@ def flatten(config, kwargs):
             kwargs[key] = config[key]
     return kwargs
 
+def observer(message):
+    return True
+
 @pytest.fixture(scope="session")
 def upload_job():
     kwargs = flatten(config, {})
@@ -163,6 +166,10 @@ def upload_job():
 @pytest.fixture(scope="session")
 def upload_job_args():
     return UploadJob("test.csv", base_url=None, api_key=None, table_name=None, delimiter=",", columns=None, date_columns=None, float_comma_separator=".", float_thousand_separator=None, file_encoding="utf-8", chunk_size=10000, max_attempts=3, force_no_geometry=False, force_the_geom=False, x_column="longitude", y_column="latitude", srid=4326, file="carto-etl.log", level=30)
+
+@pytest.fixture(scope="session")
+def upload_job_observer():
+    return UploadJob("test.csv", base_url=None, api_key=None, table_name=None, delimiter=",", columns=None, date_columns=None, float_comma_separator=".", float_thousand_separator=None, file_encoding="utf-8", chunk_size=10000, max_attempts=3, force_no_geometry=False, force_the_geom=False, x_column="longitude", y_column="latitude", srid=4326, file="carto-etl.log", level=30, observer=observer)
 
 @pytest.fixture(scope="session")
 def upload_job_no_geometry():
