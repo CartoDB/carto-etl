@@ -126,8 +126,12 @@ class UploadJob(object):
         if not isinstance(self.csv_file_path, str):
             self.do_run(self.csv_file_path, start_chunk, end_chunk)
         else:
-            with open(self.csv_file_path) as f:
-                self.do_run(f, start_chunk, end_chunk)
+            if sys.version_info <= (3, 0):
+                with open(self.csv_file_path) as f:
+                    self.do_run(f, start_chunk, end_chunk)
+            else:
+                with open(self.csv_file_path, encoding=self.file_encoding) as f:
+                    self.do_run(f, start_chunk, end_chunk)
 
     def notify(self, message_type, message):
         observer = getattr(self, "observer", None)
@@ -239,7 +243,8 @@ class UploadJob(object):
         return float(value)
 
     def send(self, query, file_encoding, chunk_num):
-        query = query.decode(file_encoding).encode(UTF8)
+        if sys.version_info <= (3, 0):
+            query = query.decode(file_encoding).encode(UTF8)
         logger.debug("Chunk #{chunk_num}: {query}".
                     format(chunk_num=(chunk_num + 1), query=query))
         for retry in range(self.max_attempts):
