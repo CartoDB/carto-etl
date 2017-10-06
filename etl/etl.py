@@ -126,7 +126,6 @@ class UploadJob(object):
         if not isinstance(self.csv_file_path, str):
             self.do_run(self.csv_file_path, start_chunk, end_chunk)
         else:
-            import ipdb; ipdb.set_trace(context=40)
             with open(self.csv_file_path) as f:
                 self.do_run(f, start_chunk, end_chunk)
 
