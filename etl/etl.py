@@ -66,6 +66,22 @@ def reencode(file, file_encoding):
         yield line.decode(file_encoding).encode(UTF8)
 
 
+class InsensitiveDictReader(csv.DictReader):
+    @property
+    def fieldnames(self):
+        return [field.strip().lower() for field in csv.DictReader.fieldnames.fget(self)]
+
+    def next(self):
+        return InsensitiveDict(csv.DictReader.next(self))
+
+
+class InsensitiveDict(dict):
+    # This class overrides the __getitem__ method to automatically strip() and lower() the input key
+
+    def __getitem__(self, key):
+        return dict.__getitem__(self, key.strip().lower())
+
+
 class UploadJob(object):
     def __init__(self, csv_file_path, **kwargs):
         self.__set_max_csv_length()
@@ -277,7 +293,7 @@ class UploadJob(object):
 class InsertJob(UploadJob):
     def do_run(self, stream, start_chunk, end_chunk):
         self.notify('total_rows', _count(stream) / int(self.chunk_size))
-        csv_reader = csv.DictReader(stream, delimiter=self.delimiter)
+        csv_reader = InsensitiveDictReader(stream, delimiter=self.delimiter)
         for chunk_num, record_chunk in enumerate(
                     chunks(csv_reader, self.chunk_size, start_chunk, end_chunk)):
             cols = self.columns.lower()
@@ -300,7 +316,7 @@ class UpdateJob(UploadJob):
 
     def do_run(self, stream, start_row=1, end_row=None):
         self.notify('total_rows', _count(stream))
-        csv_reader = csv.DictReader(stream, delimiter=self.delimiter)
+        csv_reader = InsensitiveDictReader(stream, delimiter=self.delimiter)
 
         for row_num, record in enumerate(csv_reader):
             if row_num < (start_row - 1):
@@ -338,7 +354,7 @@ class DeleteJob(UploadJob):
 
     def do_run(self, stream, start_chunk, end_chunk):
         self.notify('total_rows', _count(stream) / int(self.chunk_size))
-        csv_reader = csv.DictReader(stream, delimiter=self.delimiter)
+        csv_reader = InsensitiveDictReader(stream, delimiter=self.delimiter)
 
         for chunk_num, record_chunk in enumerate(
                 chunks(csv_reader, self.chunk_size, start_chunk, end_chunk)):
