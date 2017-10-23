@@ -79,6 +79,8 @@ class UploadJob(object):
             except Exception:
                 setattr(self, key, value)
 
+        self.__trim_columns()
+
         self.csv_file_path = csv_file_path
 
         if self.api_key:
@@ -121,6 +123,13 @@ class UploadJob(object):
             except OverflowError:
                 maxInt = int(maxInt/10)
                 decrement = True
+
+    def __trim_columns(self):
+        if self.columns is not None:
+            self.columns = self.columns.replace(' ', '')
+
+        if self.date_columns is not None:
+            self.date_columns = self.date_columns.replace(' ', '')
 
     def run(self, start_chunk=1, end_chunk=None):
         if not isinstance(self.csv_file_path, str):
