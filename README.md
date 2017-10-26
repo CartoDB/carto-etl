@@ -1,6 +1,6 @@
 # SDK for ETL with CARTO's SQL API
 
-![](https://travis-ci.org/CartoDB/carto-etl.svg?branch=tests)
+![](https://travis-ci.org/CartoDB/carto-etl.svg)
 
 ## Installation and usage
 
