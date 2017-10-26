@@ -89,11 +89,7 @@ class UploadJob(object):
         for key, value in kwargs.items():
             try:
                 setattr(self, key, int(value))
-<<<<<<< HEAD
             except (ValueError, TypeError):
-=======
-            except ValueError:
->>>>>>> fe6f4794fd3c9f379dd7c64fa11898138920dfbf
                 if value in ("true", "True"):
                     setattr(self, key, True)
                 elif value in ("false", "False"):
