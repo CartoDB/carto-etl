@@ -88,12 +88,14 @@ class UploadJob(object):
         self.__set_defaults()
         for key, value in kwargs.items():
             try:
-                if value in ['true', 'false']:
-                    setattr(self, key, self.__str2bool(value))
+                setattr(self, key, int(value))
+            except ValueError:
+                if value in ("true", "True"):
+                    setattr(self, key, True)
+                elif value in ("false", "False"):
+                    setattr(self, key, False)
                 else:
-                    setattr(self, key, int(value))
-            except Exception:
-                setattr(self, key, value)
+                    setattr(self, key, value)
 
         self.__trim_columns()
 
@@ -120,11 +122,6 @@ class UploadJob(object):
         self.float_thousand_separator = DEFAULT_FLOAT_THOUSAND_SEPARATOR
         self.date_columns = DEFAULT_DATE_COLUMNS
         self.observer = None
-
-    def __str2bool(self, val):
-        if val in ['true', 'True']:
-            return True
-        return False
 
     def __set_max_csv_length(self):
         maxInt = sys.maxsize
@@ -242,7 +239,8 @@ class UploadJob(object):
                 return None
         except TypeError:
             return DEFAULT_COORD
-        return longitude
+        else:
+            return longitude
 
     def get_latitude(self, record):
         try:
@@ -251,14 +249,16 @@ class UploadJob(object):
                 return None
         except TypeError:
             return DEFAULT_COORD
-        return latitude
+        else:
+            return latitude
 
     def get_coord(self, record, type):
         try:
             coord = self.parse_float_value(record[type]) or DEFAULT_COORD
         except (ValueError, KeyError):
             coord = DEFAULT_COORD
-        return coord
+        else:
+            return coord
 
     def parse_float_value(self, value):
         if self.float_thousand_separator:
@@ -315,6 +315,7 @@ class UpdateJob(UploadJob):
         super(UpdateJob, self).__init__(*args, **kwargs)
 
     def do_run(self, stream, start_row=1, end_row=None):
+        import ipdb; ipdb.set_trace(context=30)
         self.notify('total_rows', _count(stream))
         csv_reader = InsensitiveDictReader(stream, delimiter=self.delimiter)
 
