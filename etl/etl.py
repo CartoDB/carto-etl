@@ -29,6 +29,7 @@ DEFAULT_DATETIME_FORMAT=None
 DEFAULT_FLOAT_COMMA_SEPARATOR=None
 DEFAULT_FLOAT_THOUSAND_SEPARATOR=None
 DEFAULT_DATE_COLUMNS=None
+FORBIDDEN_FLOAT_VALUES=["INFINITY"]
 
 logger = logging.getLogger('carto-etl')
 
@@ -261,6 +262,8 @@ class UploadJob(object):
             return coord
 
     def parse_float_value(self, value):
+        if value.upper() in (val.upper() for val in FORBIDDEN_FLOAT_VALUES):
+            raise ValueError
         if self.float_thousand_separator:
             value = value.replace(self.float_thousand_separator, "")
         if self.float_comma_separator:

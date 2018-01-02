@@ -210,5 +210,6 @@ def record():
         "date_col3": "01/09/2017 22:47:25",
         "date_col4": "01-09-2017 2:47:25",
         "wrong_date_col": "zzz",
-        "wrong_date_col2": ""
+        "wrong_date_col2": "",
+        "forbidden_float": "INFINITY"
     }
