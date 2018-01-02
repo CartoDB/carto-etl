@@ -81,3 +81,8 @@ def test_parse_wrong_date2(upload_job, record):
 
 def test_job_observer(upload_job_observer, record):
     assert upload_job_observer.notify("test", "whatever") == True
+
+def test_parse_forbidden_float_column(upload_job, record):
+    assert upload_job.parse_column_value(record, "forbidden_float") == "'INFINITY',"
+    with pytest.raises(ValueError):
+        upload_job.parse_float_value("INFINITY")
