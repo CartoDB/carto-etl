@@ -31,7 +31,7 @@ There is a template file `etl.conf.example` that can be used to get the final `e
 ```
 [carto]
 base_url=https://cartouser.carto.com/
-api_key=5565dgfgfd2b8ajjhgjgfa94d311aa60lk89vnber45errfg5gb
+api_key=YOUR_API_KEY
 table_name=samples
 delimiter=,
 columns=object_id,privacy,resource_type,country_code,date
